@@ -1,1 +1,2 @@
-# gentoo_amd_r7
+# Gentoo AMD Ryzen 7
+
