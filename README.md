@@ -17,7 +17,7 @@ amdgpu/renoir_mec2.bin
 amdgpu/renoir_vcn.bin 
 amdgpu/renoir_gpu_info.bin 
 amdgpu/renoir_pfp.bin 
-admgpu/renoir_ta.bin 
+# admgpu/renoir_ta.bin 
 amd-ucode/microcode_amd_fam17h.bin 
 iwlwifi-cc-a0-46.ucode
 ```
