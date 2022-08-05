@@ -3,6 +3,18 @@
 Also make a reference of https://wiki.gentoo.org/wiki/Lenovo_Ideapad_Slim_7
 
 
+## Prepare
+
+```bash
+rfkill unblock all
+net-setup
+
+passwd
+
+/etc/init.d/ssh start
+
+```
+
 ## firmware 
 
 ```
@@ -36,14 +48,14 @@ mkfs.ext4 -L root /dev/nvme0n1p3
 
 ```bash
 mount /dev/nvme0n1p3 /mnt/gentoo
-mkdir -p /mnt/gentoo/boot/efi
-mount /dev/nvme0n1p2 /mnt/gentoo/boot/efi
+mkdir -p /mnt/gentoo/boot
+mount /dev/nvme0n1p2 /mnt/gentoo/boot
 lsblk
 ```
 
 ```bash
 cd /mnt/gentoo
-links http://www.gentoo.org/main/en/mirrors.xml
+links https://www.gentoo.org/main/en/mirrors.xml
 
 tar xvf stage3-*.tar.xz --xattrs
 ```
@@ -159,10 +171,8 @@ emerge net-wireless/wpa_supplicant
 
 ```bash
 emerge sys-boot/grub:2
-grub-install --target=x86_64-efi --efi-directory=/boot/efi --removable
+grub-install --target=x86_64-efi --efi-directory=/boot --removable
 grub-mkconfig -o /boot/grub/grub.cfg
-#mkdir -p /boot/efi/EFI/arch
-grub-mkconfig -o /boot/efi/EFI/arch/grub.cfg
 ```
 
 ```bash
@@ -171,4 +181,10 @@ cd
 umount -l /mnt/gentoo/dev{/shm,/pts,}
 umount -l /mnt/gentoo{/boot,/proc,}
 reboot
+```
+
+## KVM
+
+```bash
+minikube start --driver=kvm2 --extra-config=kubelet.cgroup-driver=systemd --image-mirror-country='cn' --registry-mirror='https://guqcep47.mirror.aliyuncs.com' --image-repository='registry.cn-hangzhou.aliyuncs.com/google_containers' --kubernetes-version=v1.23.8
 ```
