@@ -17,6 +17,8 @@ passwd
 
 ## firmware 
 
+Ryzen 7 5800HZ
+
 ```
 amd-ucode/microcode_amd_fam17h.bin amd/amd_sev_fam17h_model0xh.sbin iwlwifi-cc-a0-46.ucode amdgpu/renoir_asd.bin amdgpu/renoir_dmcub.bin amdgpu/renoir_me.bin amdgpu/renoir_mec.bin amdgpu/renoir_rlc.bin amdgpu/renoir_ta.bin amdgpu/renoir_ce.bin amdgpu/renoir_gpu_info.bin amdgpu/renoir_mec2.bin amdgpu/renoir_pfp.bin amdgpu/renoir_sdma.bin amdgpu/renoir_vcn.bin
 ```
