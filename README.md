@@ -5,6 +5,33 @@ Also make a reference of https://wiki.gentoo.org/wiki/Lenovo_Ideapad_Slim_7
 
 ## Prepare
 
+format USB
+
+```bash
+sudo umount /dev/sda3
+
+sudo dd if=/isos/gentoo-**-.iso of=/dev/sda bs=1M status=progress
+```
+
+```bash
+sudo mkfs.ext4 /dev/sda3
+sudo fsck /dev/sda3
+```
+
+Backup the home directory of your linux system
+
+```bash
+sudo rsync -a --info=progress2 --exclude="lost+found" --exclude=".cache" /home/ /mnt/usbdrive/
+```
+
+Restore the home directory of your linux system
+
+```bash
+sudo rsync -a --info=progress2 --exclude="lost+found" --exclude=".cache" /mnt/usbdrive/ /home/
+```
+
+net work
+
 ```bash
 rfkill unblock all
 net-setup
@@ -20,7 +47,7 @@ passwd
 Ryzen 7 5800HZ
 
 ```
-amd-ucode/microcode_amd_fam17h.bin amd/amd_sev_fam17h_model0xh.sbin iwlwifi-cc-a0-46.ucode amdgpu/renoir_asd.bin amdgpu/renoir_dmcub.bin amdgpu/renoir_me.bin amdgpu/renoir_mec.bin amdgpu/renoir_rlc.bin amdgpu/renoir_ta.bin amdgpu/renoir_ce.bin amdgpu/renoir_gpu_info.bin amdgpu/renoir_mec2.bin amdgpu/renoir_pfp.bin amdgpu/renoir_sdma.bin amdgpu/renoir_vcn.bin
+amd-ucode/microcode_amd_fam19h.bin,amd/amd_sev_fam19h_model0xh.sbin,iwlwifi-cc-a0-46.ucode,amdgpu/green_sardine_asd.bin,amdgpu/green_sardine_ce.bin,amdgpu/green_sardine_dmcub.bin,amdgpu/green_sardine_me.bin,amdgpu/green_sardine_mec.bin,amdgpu/green_sardine_mec2.bin,amdgpu/green_sardine_pfp.bin,amdgpu/green_sardine_rlc.bin,amdgpu/green_sardine_sdma.bin,amdgpu/green_sardine_ta.bin,amdgpu/green_sardine_vcn.bin
 ```
 
 
@@ -32,12 +59,16 @@ parted /dev/nvme0n1
 (parted) mkpart ESP fat32 1 513
 (parted) set 1 bios_grub on                                               
 (parted) name 1 grub                                                      
-(parted) mkpart primary 513 800                                           
+(parted) mkpart primary 513 1537                                           
 (parted) name 2 boot                                                      
-(parted) set 2 boot on                                                    
-(parted) mkpart primary 800 100%                                          
-(parted) name 3 root                                                      
-(parted) println                                                          
+(parted) set 2 boot on
+(parted) mkpart primary 1537 165377
+(parted) name 3 home
+(parted) mkpart primary 165377 247297
+(parted) name 4 opt                                                     
+(parted) mkpart primary 247297 100%                                          
+(parted) name 5 root                                                      
+(parted) print                                                          
 
 
 ...
@@ -45,13 +76,19 @@ parted /dev/nvme0n1
 
 ```bash
 mkfs.vfat /dev/nvme0n1p2
-mkfs.ext4 -L root /dev/nvme0n1p3
+mkfs.ext4 -L root /dev/nvme0n1p5
+mkfs.ext4 -L home /dev/nvme0n1p3
+mkfs.ext4 -L opt /dev/nvme0n1p4
 ```
 
 ```bash
-mount /dev/nvme0n1p3 /mnt/gentoo
+mount /dev/nvme0n1p5 /mnt/gentoo
 mkdir -p /mnt/gentoo/boot
 mount /dev/nvme0n1p2 /mnt/gentoo/boot
+mkdir -p /mnt/gentoo/home
+mount /dev/nvme0n1p3 /mnt/gentoo/home
+mkdir -p /mnt/gentoo/opt
+mount /dev/nvme0n1p4 /mnt/gentoo/opt
 lsblk
 ```
 
@@ -136,6 +173,10 @@ env-update && source /etc/profile && export PS1="(chroot) $PS1"
 emerge --ask sys-kernel/gentoo-sources sys-apps/pciutils sys-kernel/genkernel
 
 nano -w /etc/genkernel.conf
+```
+
+```bash
+genfstab -U -p /  >> /etc/fstab
 ```
 
 ```bash
