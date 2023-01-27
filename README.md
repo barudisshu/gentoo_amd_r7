@@ -1,9 +1,20 @@
 # Gentoo AMD Ryzen 7
 
-Also make a reference of https://wiki.gentoo.org/wiki/Lenovo_Ideapad_Slim_7
-
+Also make a reference of 
+- https://wiki.gentoo.org/wiki/Lenovo_Ideapad_Slim_7
+- https://wiki.gentoo.org/wiki/Lenovo_Thinkpad_T495
 
 ## Prepare
+
+```bash
+# check your device
+lspci -nnk
+lsusb
+lsusb -t
+lscpu
+lsinput -v
+libinput list-devices
+```
 
 format USB
 
@@ -83,18 +94,16 @@ mkfs.ext4 -L opt /dev/nvme0n1p4
 
 ```bash
 mount /dev/nvme0n1p5 /mnt/gentoo
-mkdir -p /mnt/gentoo/boot
+mkdir -p /mnt/gentoo{/boot,/home,/opt,}
 mount /dev/nvme0n1p2 /mnt/gentoo/boot
-mkdir -p /mnt/gentoo/home
 mount /dev/nvme0n1p3 /mnt/gentoo/home
-mkdir -p /mnt/gentoo/opt
 mount /dev/nvme0n1p4 /mnt/gentoo/opt
 lsblk
 ```
 
 ```bash
 cd /mnt/gentoo
-links https://www.gentoo.org/main/en/mirrors.xml
+links https://www.gentoo.org/downloads/mirrors/
 
 tar xvf stage3-*.tar.xz --xattrs
 ```
@@ -141,6 +150,7 @@ eselect profile set 7
 ```bash
 emerge -avuDN @world
 emerge --ask ufed
+emerge --ask cpuid2cpuflags
 ```
 
 ```bash
@@ -176,12 +186,13 @@ nano -w /etc/genkernel.conf
 ```
 
 ```bash
+emerge --ask genfstab
 genfstab -U -p /  >> /etc/fstab
 ```
 
 ```bash
-/dev/nvme0n1p2	        /boot/efi	vfat	        noauto,noatime                                  0 1
-/dev/nvme0n1p3          /	        ext4	        discard,noatime,commit=600,errors=remount-ro	0 1
+/dev/nvme0n1p2	        /boot   	vfat	        noauto,noatime                                  0 1
+/dev/nvme0n1p5          /	        ext4	        discard,noatime,commit=600,errors=remount-ro	0 1
 ```
 
 ```bash
@@ -210,6 +221,8 @@ visudo
 ```bash
 emerge net-wireless/iw
 emerge net-wireless/wpa_supplicant
+emerge networkmanager
+systemctl enable NetworkManager
 ```
 
 ```bash
@@ -231,3 +244,11 @@ reboot
 ```bash
 minikube start --driver=kvm2 --extra-config=kubelet.cgroup-driver=systemd --image-mirror-country='cn' --registry-mirror='https://guqcep47.mirror.aliyuncs.com' --image-repository='registry.cn-hangzhou.aliyuncs.com/google_containers' --kubernetes-version=v1.23.8
 ```
+
+## App
+
+https://wiki.gentoo.org/wiki/Recommended_applications
+
+## Problem
+
+touchpad not detected: https://wiki.gentoo.org/wiki/Asus_Tuf_Gaming_fx505dy#Touchpad
