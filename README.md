@@ -252,3 +252,26 @@ https://wiki.gentoo.org/wiki/Recommended_applications
 ## Problem
 
 touchpad not detected: https://wiki.gentoo.org/wiki/Asus_Tuf_Gaming_fx505dy#Touchpad
+
+## GDM scaling
+
+tl/dr
+
+```bash
+sudo nano /usr/share/glib-2.0/schemas/org.gnome.desktop.interface.gschema.xml
+```
+
+Change the default value to 2 (or your desired scale factor):
+
+```xml
+<key name="scaling-factor" type="u">
+<default>2</default>
+```
+
+and then running:
+
+```bash
+sudo glib-compile-schemas /usr/share/glib-2.0/schemas
+```
+
+This fixed it for me. Let me know if it works for you as well.
