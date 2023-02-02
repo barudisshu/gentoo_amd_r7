@@ -275,3 +275,10 @@ sudo glib-compile-schemas /usr/share/glib-2.0/schemas
 ```
 
 This fixed it for me. Let me know if it works for you as well.
+
+
+## dev-*
+
+```bash
+sudo emerge --ask maven-bin gradle-bin sbt-bin
+```
