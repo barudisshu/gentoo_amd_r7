@@ -253,6 +253,12 @@ https://wiki.gentoo.org/wiki/Recommended_applications
 
 touchpad not detected: https://wiki.gentoo.org/wiki/Asus_Tuf_Gaming_fx505dy#Touchpad
 
+audio no work.
+
+```bash
+systemctl --global enable pulseaudio.service pulseaudio.socket
+```
+
 ## GDM scaling
 
 tl/dr
