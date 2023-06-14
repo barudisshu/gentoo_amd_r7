@@ -253,11 +253,12 @@ https://wiki.gentoo.org/wiki/Recommended_applications
 
 touchpad not detected: https://wiki.gentoo.org/wiki/Asus_Tuf_Gaming_fx505dy#Touchpad
 
-audio no work.
+audio no work: https://www.gentoo.org/support/news-items/2022-07-29-pipewire-sound-server.html
 
 ```bash
 systemctl --global enable pulseaudio.service pulseaudio.socket
 ```
+
 
 ## GDM scaling
 
