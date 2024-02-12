@@ -249,6 +249,12 @@ minikube start --driver=kvm2 --extra-config=kubelet.cgroup-driver=systemd --imag
 
 https://wiki.gentoo.org/wiki/Recommended_applications
 
+## Repository
+https://wiki.gentoo.org/wiki/Eselect/Repository
+
+## Fonts
+https://wiki.gentoo.org/wiki/Fontconfig#Picking_fonts
+
 ## Problem
 
 touchpad not detected: https://wiki.gentoo.org/wiki/Asus_Tuf_Gaming_fx505dy#Touchpad
