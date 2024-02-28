@@ -148,9 +148,12 @@ eselect profile set 7
 ```
 
 ```bash
-emerge -avuDN @world
 emerge --ask ufed
 emerge --ask cpuid2cpuflags
+
+USE="-harfbuzz abi_x86_32" emerge -a --oneshot freetype
+USE="-gpm" emerge -1 sys-libs/ncurses 
+emerge -avuDN @world
 ```
 
 ```bash
@@ -180,7 +183,7 @@ env-update && source /etc/profile && export PS1="(chroot) $PS1"
 ```
 
 ```bash
-emerge --ask sys-kernel/gentoo-sources sys-apps/pciutils sys-kernel/genkernel
+emerge --ask sys-kernel/gentoo-sources:6.6.13 sys-apps/pciutils sys-kernel/genkernel
 
 nano -w /etc/genkernel.conf
 ```
@@ -203,7 +206,11 @@ genkernel all
 emerge cronie
 emerge mlocate
 emerge dhcpcd
+emerge acpid
+emerge openssh
 systemctl enable cronie
+systemctl enable sshd
+systemctl enable acpid
 systemctl enable sshd
 ```
 
@@ -232,6 +239,14 @@ grub-mkconfig -o /boot/grub/grub.cfg
 ```
 
 ```bash
+emerge gnome vim
+gpasswd -a galudisu plugdev
+systemctl enable gdm
+
+emerge autojump tmux
+```
+
+```bash
 exit
 cd
 umount -l /mnt/gentoo/dev{/shm,/pts,}
@@ -249,11 +264,18 @@ minikube start --driver=kvm2 --extra-config=kubelet.cgroup-driver=systemd --imag
 
 https://wiki.gentoo.org/wiki/Recommended_applications
 
+``bash
+emerge foliate evince gnote libreoffice firefox evolution geary qbittorrent chromium imagemagick gimp flameshot inkscape shotwell mpv vlc smplayer nfs-utils vscode usbview gparted
+``
+
 ## Repository
 https://wiki.gentoo.org/wiki/Eselect/Repository
 
 ## Fonts
 https://wiki.gentoo.org/wiki/Fontconfig#Picking_fonts
+```bash
+emerge liberation-fonts libertine noto dejavu droid sil-gentium ubuntu-font-family urw-fonts corefonts unifont wqy-zenhei wqy-microhei
+```
 
 ## Problem
 
@@ -262,7 +284,9 @@ touchpad not detected: https://wiki.gentoo.org/wiki/Asus_Tuf_Gaming_fx505dy#Touc
 audio no work: https://www.gentoo.org/support/news-items/2022-07-29-pipewire-sound-server.html
 
 ```bash
-systemctl --global enable pulseaudio.service pulseaudio.socket
+systemctl --global disable pulseaudio.service pulseaudio.socket
+systemctl --global enable pipewire.service pipewire-pulse.socket
+systemctl --global --force enable wireplumber.service
 ```
 
 
