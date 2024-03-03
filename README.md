@@ -148,12 +148,8 @@ eselect profile set 7
 ```
 
 ```bash
-emerge --ask ufed
-emerge --ask cpuid2cpuflags
-
-USE="-harfbuzz abi_x86_32" emerge -a --oneshot freetype
-USE="-gpm" emerge -1 sys-libs/ncurses 
-emerge -avuDN @world
+emerge ufed
+emerge cpuid2cpuflags
 ```
 
 ```bash
@@ -183,6 +179,7 @@ env-update && source /etc/profile && export PS1="(chroot) $PS1"
 ```
 
 ```bash
+emerge -avuDN @world
 emerge --ask sys-kernel/gentoo-sources:6.6.13 sys-apps/pciutils sys-kernel/genkernel
 
 nano -w /etc/genkernel.conf
@@ -264,9 +261,9 @@ minikube start --driver=kvm2 --extra-config=kubelet.cgroup-driver=systemd --imag
 
 https://wiki.gentoo.org/wiki/Recommended_applications
 
-``bash
+```bash
 emerge foliate evince gnote libreoffice firefox evolution geary qbittorrent chromium imagemagick gimp flameshot inkscape shotwell mpv vlc smplayer nfs-utils vscode usbview gparted
-``
+```
 
 ## Repository
 https://wiki.gentoo.org/wiki/Eselect/Repository
