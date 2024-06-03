@@ -234,6 +234,7 @@ systemctl enable NetworkManager
 
 ```bash
 emerge sys-boot/grub:2
+## there's a bug in `--removable` in new version grub2 while it's merge-usr distribution.
 grub-install --target=x86_64-efi --efi-directory=/boot --removable
 grub-mkconfig -o /boot/grub/grub.cfg
 ```
