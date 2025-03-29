@@ -109,8 +109,8 @@ tar xvf stage3-*.tar.xz --xattrs
 ```
 
 ```bash
-GENTOO_MIRRORS="https://mirrors.aliyun.com/gentoo/"
-sync-uri = rsync://mirrors.tuna.tsinghua.edu.cn/gentoo-portage
+GENTOO_MIRRORS="https://mirrors.ustc.edu.cn/gentoo/"
+sync-uri = rsync://rsync.mirrors.ustc.edu.cn/gentoo-portage
 ```
 
 ```bash
@@ -144,16 +144,12 @@ emerge --sync
 
 ```bash
 eselect profile list
-eselect profile set 7
+eselect profile set 23
 ```
 
 ```bash
 emerge --ask ufed
 emerge --ask cpuid2cpuflags
-
-USE="-harfbuzz abi_x86_32" emerge -a --oneshot freetype
-USE="-gpm" emerge -1 sys-libs/ncurses 
-emerge -avuDN @world
 ```
 
 ```bash
@@ -183,7 +179,7 @@ env-update && source /etc/profile && export PS1="(chroot) $PS1"
 ```
 
 ```bash
-emerge --ask sys-kernel/gentoo-sources:6.6.13 sys-apps/pciutils sys-kernel/genkernel
+emerge --ask sys-kernel/gentoo-sources:6.12.16 sys-apps/pciutils sys-kernel/genkernel
 
 nano -w /etc/genkernel.conf
 ```
@@ -240,7 +236,7 @@ grub-mkconfig -o /boot/grub/grub.cfg
 ```
 
 ```bash
-emerge gnome vim
+CCACHE_RECACHE=yes MAKEOPTS="-J3" emerge gnome vim
 gpasswd -a galudisu plugdev
 systemctl enable gdm
 
