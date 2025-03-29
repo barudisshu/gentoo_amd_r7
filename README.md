@@ -144,7 +144,7 @@ emerge --sync
 
 ```bash
 eselect profile list
-eselect profile set 23
+eselect profile set 26
 ```
 
 ```bash
