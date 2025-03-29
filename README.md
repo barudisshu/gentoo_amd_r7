@@ -226,6 +226,7 @@ emerge net-wireless/iw
 emerge net-wireless/wpa_supplicant
 emerge networkmanager
 systemctl enable NetworkManager
+systemctl enable bluetooth
 ```
 
 ```bash
