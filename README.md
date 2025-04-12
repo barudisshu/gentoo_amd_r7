@@ -275,6 +275,43 @@ https://wiki.gentoo.org/wiki/Fontconfig#Picking_fonts
 emerge liberation-fonts libertine noto dejavu droid sil-gentium ubuntu-font-family urw-fonts corefonts unifont wqy-zenhei wqy-microhei
 ```
 
+## CPU Flag
+
+```bash
+emerge --ask resolve-march-native
+```
+
+## Flatpak
+
+```bash
+emerge --ask sys-apps/flatpak
+flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+## For chinese mirror
+flatpak remote-modify flathub --url=https://mirror.sjtu.edu.cn/flathub
+```
+
+## Libinput
+
+https://wiki.gentoo.org/wiki/Libinput
+
+```bash
+cp /usr/share/X11/xorg.conf.d/40-libinput.conf /etc/X11/xorg.conf.d/
+```
+
+Edit `vim etc/X11/xorg.conf.d/40-libinput.conf`
+
+```bash
+Section "InputClass"
+     Identifier "libinput touchpad catchall"
+     MatchIsTouchpad "on"
+     MatchDevicePath "/dev/input/event*"
+     Option "Tapping" "True"
+     Option "TappingDrag" "True"
+     Option "NaturalScrolling" "True"
+     Driver "libinput"
+EndSection
+```
+
 ## Problem
 
 touchpad not detected: https://wiki.gentoo.org/wiki/Asus_Tuf_Gaming_fx505dy#Touchpad
