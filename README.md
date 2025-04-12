@@ -73,12 +73,10 @@ parted /dev/nvme0n1
 (parted) mkpart primary 513 1537                                           
 (parted) name 2 boot                                                      
 (parted) set 2 boot on
-(parted) mkpart primary 1537 165377
+(parted) mkpart primary 1537 247297
 (parted) name 3 home
-(parted) mkpart primary 165377 247297
-(parted) name 4 opt                                                     
 (parted) mkpart primary 247297 100%                                          
-(parted) name 5 root                                                      
+(parted) name 4 root                                                      
 (parted) print                                                          
 
 
@@ -87,17 +85,15 @@ parted /dev/nvme0n1
 
 ```bash
 mkfs.vfat /dev/nvme0n1p2
-mkfs.ext4 -L root /dev/nvme0n1p5
 mkfs.ext4 -L home /dev/nvme0n1p3
-mkfs.ext4 -L opt /dev/nvme0n1p4
+mkfs.ext4 -L root /dev/nvme0n1p4
 ```
 
 ```bash
-mount /dev/nvme0n1p5 /mnt/gentoo
+mount /dev/nvme0n1p4 /mnt/gentoo
 mkdir -p /mnt/gentoo{/boot,/home,/opt,}
 mount /dev/nvme0n1p2 /mnt/gentoo/boot
 mount /dev/nvme0n1p3 /mnt/gentoo/home
-mount /dev/nvme0n1p4 /mnt/gentoo/opt
 lsblk
 ```
 
