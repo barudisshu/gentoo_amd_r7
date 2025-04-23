@@ -241,6 +241,16 @@ emerge autojump tmux
 ```
 
 ```bash
+timedatectl set-ntp true
+timedatectl set-timezone Asia/Shanghai
+
+systemd-machine-id-setup
+systemd-firstboot --prompt
+systemctl daemon-reexec
+hostnamectl  set-hostname <hostname>
+```
+
+```bash
 exit
 cd
 umount -l /mnt/gentoo/dev{/shm,/pts,}
