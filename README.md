@@ -208,7 +208,7 @@ systemctl enable sshd
 
 ```bash
 passwd
-useradd -m -G users,wheel,audio,lp,cdrom,portage,cron,video,usb -s /bin/bash galudisu
+useradd -m -G users,wheel,audio,lp,cdrom,portage,cron,video,usb,input -s /bin/bash galudisu
 passwd galudisu
 ```
 
