@@ -175,7 +175,7 @@ env-update && source /etc/profile && export PS1="(chroot) $PS1"
 ```
 
 ```bash
-emerge --ask sys-kernel/gentoo-sources:6.12.16 sys-apps/pciutils sys-kernel/genkernel
+emerge --ask sys-kernel/gentoo-sources:6.12.58 sys-apps/pciutils sys-kernel/genkernel
 
 nano -w /etc/genkernel.conf
 ```
