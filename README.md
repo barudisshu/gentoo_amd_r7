@@ -49,7 +49,7 @@ net-setup
 
 passwd
 
-/etc/init.d/ssh start
+/etc/init.d/sshd start
 
 ```
 
