@@ -140,7 +140,7 @@ emerge --sync
 
 ```bash
 eselect profile list
-eselect profile set 26
+eselect profile set 6
 ```
 
 ```bash
@@ -156,10 +156,10 @@ nano -w /etc/locale.gen
 
 ```
 en_US ISO-8859-1
-en_US.UTF8 UTF-8
+en_US.UTF-8 UTF-8
 zh_CN GB2312
-zh_CN.UTF8 UTF-8
-C.UTF8 UTF-8
+zh_CN.UTF-8 UTF-8
+C.UTF-8 UTF-8
 ```
 
 
