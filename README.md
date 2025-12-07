@@ -65,7 +65,7 @@ amd-ucode/microcode_amd_fam19h.bin,amd/amd_sev_fam19h_model0xh.sbin,iwlwifi-cc-a
 ```bash
 parted /dev/nvme0n1
 
-(parted) mklabe gpt
+(parted) mklabel gpt
 (parted) unit mib                                                         
 (parted) mkpart ESP fat32 1 513
 (parted) set 1 bios_grub on                                               
@@ -269,7 +269,7 @@ minikube start --driver=kvm2 --extra-config=kubelet.cgroup-driver=systemd --imag
 https://wiki.gentoo.org/wiki/Recommended_applications
 
 ``bash
-emerge foliate evince gnote libreoffice firefox evolution geary qbittorrent chromium imagemagick gimp flameshot inkscape shotwell mpv vlc smplayer nfs-utils vscode usbview gparted
+emerge foliate evince gnote libreoffice firefox evolution geary qbittorrent chromium imagemagick gimp flameshot inkscape shotwell mpv vlc smplayer nfs-utils vscode usbview gparted filezilla xournalpp geogebra-bin
 ``
 
 ## Repository
