@@ -269,7 +269,7 @@ minikube start --driver=kvm2 --extra-config=kubelet.cgroup-driver=systemd --imag
 https://wiki.gentoo.org/wiki/Recommended_applications
 
 ``bash
-emerge foliate evince gnote libreoffice firefox evolution geary qbittorrent chromium imagemagick gimp flameshot inkscape shotwell mpv vlc smplayer nfs-utils vscode usbview gparted filezilla xournalpp geogebra-bin
+emerge --ask foliate evince gnote libreoffice firefox evolution geary qbittorrent chromium imagemagick gimp flameshot inkscape shotwell mpv vlc smplayer nfs-utils vscode usbview gparted filezilla xournalpp geogebra-bin octave
 ``
 
 ## Repository
@@ -278,7 +278,7 @@ https://wiki.gentoo.org/wiki/Eselect/Repository
 ## Fonts
 https://wiki.gentoo.org/wiki/Fontconfig#Picking_fonts
 ```bash
-emerge liberation-fonts libertine noto dejavu droid sil-gentium ubuntu-font-family urw-fonts corefonts unifont wqy-zenhei wqy-microhei media-fonts/wqy-bitmapfont media-fonts/noto-emoji media-fonts/cascadia-code hack media-fonts/fira-code media-fonts/fira-mono media-fonts/fira-sans
+emerge --ask liberation-fonts libertine noto dejavu droid sil-gentium ubuntu-font-family urw-fonts corefonts unifont wqy-zenhei wqy-microhei media-fonts/wqy-bitmapfont media-fonts/noto-emoji media-fonts/cascadia-code hack media-fonts/fira-code media-fonts/fira-mono media-fonts/fira-sans
 ```
 
 ## CPU Flag
