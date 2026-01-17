@@ -60,6 +60,9 @@ Ryzen 7 5800HZ
 ```
 amd-ucode/microcode_amd_fam19h.bin,amd/amd_sev_fam19h_model0xh.sbin,iwlwifi-cc-a0-46.ucode,amdgpu/green_sardine_asd.bin,amdgpu/green_sardine_ce.bin,amdgpu/green_sardine_dmcub.bin,amdgpu/green_sardine_me.bin,amdgpu/green_sardine_mec.bin,amdgpu/green_sardine_mec2.bin,amdgpu/green_sardine_pfp.bin,amdgpu/green_sardine_rlc.bin,amdgpu/green_sardine_sdma.bin,amdgpu/green_sardine_ta.bin,amdgpu/green_sardine_vcn.bin
 ```
+```
+amd-ucode/microcode_amd_fam19h.bin,amd/amd_sev_fam19h_model0xh.sbin,amd/amd_sev_fam19h_model1xh.sbin,amd/amd_sev_fam19h_modelaxh.sbin,amd/amd_sev_fam1ah_model0xh.sbin,amdgpu/psp_13_0_4_toc.bin,amdgpu/dcn_3_1_4_dmcub.bin,amdgpu/gc_11_0_1_pfp.bin,amdgpu/sdma_6_0_1.bin,amdgpu/vcn_4_0_2.bin,amdgpu/gc_11_0_1_mes_2.bin,amdgpu/gc_11_0_1_mes.bin,amdgpu/psp_13_0_4_ta.bin,amdgpu/gc_11_0_1_me.bin,amdgpu/gc_11_0_1_mes1.bin,amdgpu/gc_11_0_1_rlc.bin,amdgpu/gc_11_0_1_mec.bin,amdgpu/gc_11_0_1_imu.bin,qca/nvm_usb_00130201.bin,qca/rampatch_usb_00130201.bin,ath11k/WCN6855/hw2.1/regdb.bin,ath11k/WCN6855/hw2.1/amss.bin,ath11k/WCN6855/hw2.1/board-2.bin,ath11k/WCN6855/hw2.1/m3.bin,rtl_nic/rtl8156b-2.fw,amdnpu/1502_00/npu.sbin,ath11k/WCN6855/hw2.1/firmware-2.bin
+```
 
 
 ```bash
