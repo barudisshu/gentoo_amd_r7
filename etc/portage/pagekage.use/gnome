@@ -1,0 +1,4 @@
+# required by net-libs/gnome-online-accounts-3.56.2::gentoo[gnome]
+# required by mail-client/geary-46.0-r1::gentoo
+# required by geary (argument)
+>=gnome-base/gnome-control-center-48.4-r1 gnome-online-accounts
