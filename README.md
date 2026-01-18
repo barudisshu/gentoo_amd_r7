@@ -266,7 +266,7 @@ minikube start --driver=kvm2 --extra-config=kubelet.cgroup-driver=systemd --imag
 https://wiki.gentoo.org/wiki/Recommended_applications
 
 ``bash
-emerge --ask foliate evince gnote libreoffice firefox evolution geary qbittorrent imagemagick gimp flameshot inkscape shotwell mpv vlc smplayer nfs-utils vscode usbview gparted filezilla xournalpp geogebra-bin octave
+emerge --ask foliate evince gnote libreoffice firefox evolution geary qbittorrent imagemagick gimp flameshot inkscape shotwell mpv vlc smplayer nfs-utils vscode usbview gparted filezilla xournalpp geogebra-bin octave ibus-libpinyin
 ``
 
 ## Repository
