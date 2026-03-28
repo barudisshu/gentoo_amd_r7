@@ -76,9 +76,9 @@ parted /dev/nvme0n1
 (parted) mkpart primary 513 1537                                           
 (parted) name 2 boot                                                      
 (parted) set 2 boot on
-(parted) mkpart primary 1537 247297
+(parted) mkpart primary 1537 656897
 (parted) name 3 home
-(parted) mkpart primary 247297 100%                                          
+(parted) mkpart primary 656897 100%                                          
 (parted) name 4 root                                                      
 (parted) print                                                          
 
@@ -179,7 +179,7 @@ env-update && source /etc/profile && export PS1="(chroot) $PS1"
 ```
 
 ```bash
-emerge --ask sys-kernel/gentoo-sources:6.12.58 sys-apps/pciutils sys-kernel/genkernel
+emerge --ask sys-kernel/gentoo-sources:6.18.18 sys-apps/pciutils sys-kernel/genkernel
 
 nano -w /etc/genkernel.conf
 ```
