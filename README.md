@@ -223,11 +223,8 @@ visudo
 ```
 
 ```bash
-emerge net-wireless/iw
-emerge net-wireless/wpa_supplicant
-emerge networkmanager
-systemctl enable NetworkManager
-systemctl enable bluetooth
+emerge net-wireless/iw net-wireless/wpa_supplicant networkmanager
+systemctl enable NetworkManager bluetooth
 ```
 
 ```bash
