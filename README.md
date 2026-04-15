@@ -145,6 +145,7 @@ export PS1="(chroot) $PS1"
 ```bash
 emerge-webrsync
 emerge --ask eselect-repository
+eselect repository enable gentoo-zh
 emerge --sync
 ```
 
