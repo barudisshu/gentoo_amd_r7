@@ -138,6 +138,7 @@ export PS1="(chroot) $PS1"
 
 ```bash
 emerge-webrsync
+emerge --ask eselect-repository
 emerge --sync
 ```
 
@@ -173,13 +174,14 @@ locale-gen
 
 ```bash
 eselect locale list
-eselect locale set 6
+eselect locale set 2
 
 env-update && source /etc/profile && export PS1="(chroot) $PS1"
 ```
 
 ```bash
-emerge --ask sys-kernel/gentoo-sources:6.18.18 sys-apps/pciutils sys-kernel/genkernel
+emerge --ask sys-kernel/gentoo-sources sys-apps/pciutils sys-kernel/genkernel
+cat /var/lib/portage/world
 
 nano -w /etc/genkernel.conf
 ```
@@ -230,7 +232,7 @@ grub-mkconfig -o /boot/grub/grub.cfg
 ```
 
 ```bash
-CCACHE_RECACHE=yes MAKEOPTS="-J3" emerge gnome vim
+emerge gnome vim
 gpasswd -a galudisu plugdev
 systemctl enable gdm
 
@@ -275,7 +277,7 @@ https://wiki.gentoo.org/wiki/Eselect/Repository
 ## Fonts
 https://wiki.gentoo.org/wiki/Fontconfig#Picking_fonts
 ```bash
-emerge --ask liberation-fonts libertine noto dejavu droid sil-gentium ubuntu-font-family urw-fonts corefonts unifont wqy-zenhei wqy-microhei media-fonts/wqy-bitmapfont media-fonts/noto-emoji media-fonts/cascadia-code hack media-fonts/fira-code media-fonts/fira-mono media-fonts/fira-sans
+emerge --ask liberation-fonts libertine noto dejavu droid sil-gentium ubuntu-font-family urw-fonts corefonts unifont wqy-zenhei wqy-microhei media-fonts/wqy-bitmapfont media-fonts/noto-emoji media-fonts/cascadia-code hack media-fonts/fira-code media-fonts/fira-mono media-fonts/fira-sans media-fonts/powerline-symbols media-fonts/nerd-fonts media-fonts/symbols-nerd-font media-fonts/powerline-symbols
 ```
 
 ## Flatpak
