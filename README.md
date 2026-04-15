@@ -226,6 +226,10 @@ visudo
 ```bash
 emerge net-wireless/iw net-wireless/wpa_supplicant networkmanager
 systemctl enable NetworkManager bluetooth
+emerge nftables
+systemctl enable nftables
+eselect iptables list
+eselect iptables set 2
 ```
 
 ```bash
