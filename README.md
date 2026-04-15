@@ -108,8 +108,8 @@ tar xvf stage3-*.tar.xz --xattrs
 ```
 
 ```bash
-GENTOO_MIRRORS="https://mirrors.ustc.edu.cn/gentoo/"
-sync-uri = rsync://rsync.mirrors.ustc.edu.cn/gentoo-portage
+GENTOO_MIRRORS="https://mirrors.tuna.tsinghua.edu.cn/gentoo/"
+sync-uri = rsync://mrrors.tuna.tsinghua.edu.cn/gentoo-portage
 ```
 
 ```bash
