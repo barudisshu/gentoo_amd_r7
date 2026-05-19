@@ -115,7 +115,7 @@ tar xvf stage3-*.tar.xz --xattrs
 
 ```bash
 GENTOO_MIRRORS="https://mirrors.tuna.tsinghua.edu.cn/gentoo/"
-sync-uri = rsync://mrrors.tuna.tsinghua.edu.cn/gentoo-portage
+sync-uri = rsync://mirrors.tuna.tsinghua.edu.cn/gentoo-portage
 ```
 
 ```bash
@@ -144,7 +144,7 @@ export PS1="(chroot) $PS1"
 
 ```bash
 emerge-webrsync
-emerge --ask eselect-repository
+emerge eselect-repository
 eselect repository enable gentoo-zh
 emerge --sync
 ```
@@ -195,7 +195,7 @@ nano -w /etc/genkernel.conf
 
 ```bash
 emerge --ask genfstab
-genfstab -U -p /  >> /etc/fstab
+genfstab -U -p / >> /etc/fstab
 ```
 
 ```bash
