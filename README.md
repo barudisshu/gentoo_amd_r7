@@ -285,7 +285,6 @@ https://wiki.gentoo.org/wiki/Eselect/Repository
 ## Fonts
 https://wiki.gentoo.org/wiki/Fontconfig#Picking_fonts
 ```bash
-echo "media-fonts/*" >> /etc/portage/package.accept_keywords/fonts
 emerge --ask liberation-fonts libertine noto dejavu droid sil-gentium ubuntu-font-family urw-fonts corefonts unifont wqy-zenhei wqy-microhei media-fonts/wqy-bitmapfont media-fonts/noto-emoji media-fonts/cascadia-code hack media-fonts/fira-code media-fonts/fira-mono media-fonts/fira-sans media-fonts/powerline-symbols media-fonts/nerd-fonts media-fonts/symbols-nerd-font media-fonts/powerline-symbols
 ```
 
