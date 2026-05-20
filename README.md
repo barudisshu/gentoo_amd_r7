@@ -94,8 +94,8 @@ parted /dev/nvme0n1
 
 ```bash
 mkfs.vfat /dev/nvme0n1p2
-mkfs.ext4 -L home /dev/nvme0n1p3
-mkfs.ext4 -L root /dev/nvme0n1p4
+mkfs.btrfs -L home /dev/nvme0n1p3 -f
+mkfs.btrfs -L root /dev/nvme0n1p4 -f
 ```
 
 ```bash
@@ -275,9 +275,9 @@ minikube start --driver=kvm2 --extra-config=kubelet.cgroup-driver=systemd --imag
 
 https://wiki.gentoo.org/wiki/Recommended_applications
 
-``bash
+```bash
 emerge --ask foliate evince gnote libreoffice firefox evolution geary qbittorrent imagemagick gimp flameshot inkscape shotwell mpv vlc smplayer nfs-utils vscode usbview gparted filezilla xournalpp geogebra-bin octave ibus-libpinyin
-``
+```
 
 ## Repository
 https://wiki.gentoo.org/wiki/Eselect/Repository
@@ -285,6 +285,7 @@ https://wiki.gentoo.org/wiki/Eselect/Repository
 ## Fonts
 https://wiki.gentoo.org/wiki/Fontconfig#Picking_fonts
 ```bash
+echo "media-fonts/*" >> /etc/portage/package.accept_keywords/fonts
 emerge --ask liberation-fonts libertine noto dejavu droid sil-gentium ubuntu-font-family urw-fonts corefonts unifont wqy-zenhei wqy-microhei media-fonts/wqy-bitmapfont media-fonts/noto-emoji media-fonts/cascadia-code hack media-fonts/fira-code media-fonts/fira-mono media-fonts/fira-sans media-fonts/powerline-symbols media-fonts/nerd-fonts media-fonts/symbols-nerd-font media-fonts/powerline-symbols
 ```
 
