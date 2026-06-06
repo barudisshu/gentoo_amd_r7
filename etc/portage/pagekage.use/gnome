@@ -1,4 +1,11 @@
-# required by net-libs/gnome-online-accounts-3.56.2::gentoo[gnome]
-# required by mail-client/geary-46.0-r1::gentoo
-# required by geary (argument)
->=gnome-base/gnome-control-center-48.4-r1 gnome-online-accounts
+# required by net-fs/samba-4.23.6::gentoo
+# required by gnome-base/gnome-control-center-48.4-r1::gentoo[cups]
+# required by gnome-base/gnome-core-apps-48.0::gentoo
+# required by gnome-base/gnome-48.0::gentoo
+# required by gnome (argument)
+>=net-libs/ngtcp2-1.22.0 gnutls
+# required by media-gfx/shotwell-0.32.13::gentoo[opencv]
+# required by gnome-base/gnome-extra-apps-48.0::gentoo[shotwell]
+# required by gnome-base/gnome-48.0::gentoo[extras]
+# required by gnome (argument)
+>=media-libs/opencv-4.12.0-r1 features2d

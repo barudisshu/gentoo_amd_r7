@@ -1,5 +1,9 @@
-# required by x11-drivers/xf86-video-ati-22.0.0::gentoo
 # required by x11-base/xorg-drivers-21.1-r2::gentoo[video_cards_radeonsi,-video_cards_radeon]
-# required by x11-base/xorg-server-21.1.21::gentoo[xorg]
-# required by x11-drivers/xf86-input-libinput-1.5.0::gentoo
->=x11-libs/libdrm-2.4.131 video_cards_radeon
+# required by x11-base/xorg-server-21.1.22::gentoo[xorg]
+# required by gnome-base/gdm-49.2::gentoo[X]
+# required by gnome-base/gnome-shell-49.6::gentoo
+# required by gnome-extra/gnome-shell-extensions-49.0::gentoo
+# required by gnome-base/gnome-48.0::gentoo[classic]
+# required by @selected
+# required by @world (argument)
+>=x11-libs/libdrm-2.4.133 video_cards_radeon
