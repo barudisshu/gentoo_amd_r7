@@ -6,7 +6,7 @@ Also make a reference of
 
 ## Prepare
 
-```bash
+```shell
 # check your device
 lspci -nnk
 lsusb
@@ -18,32 +18,32 @@ libinput list-devices
 
 format USB
 
-```bash
+```shell
 sudo umount /dev/sda3
 
 sudo dd if=/isos/gentoo-**-.iso of=/dev/sda bs=1M status=progress
 ```
 
-```bash
+```shell
 sudo mkfs.ext4 /dev/sda3
 sudo fsck /dev/sda3
 ```
 
 Backup the home directory of your linux system
 
-```bash
+```shell
 sudo rsync -a --info=progress2 --exclude="lost+found" --exclude=".cache" /home/ /mnt/usbdrive/
 ```
 
 Restore the home directory of your linux system
 
-```bash
+```shell
 sudo rsync -a --info=progress2 --exclude="lost+found" --exclude=".cache" /mnt/usbdrive/ /home/
 ```
 
 net work
 
-```bash
+```shell
 rfkill unblock all
 net-setup
 
@@ -71,7 +71,7 @@ amd-ucode/microcode_amd_fam19h.bin,amd/amd_sev_fam19h_model0xh.sbin,amd/amd_sev_
 ```
 
 
-```bash
+```shell
 parted /dev/nvme0n1
 
 (parted) mklabel gpt
@@ -92,13 +92,13 @@ parted /dev/nvme0n1
 ...
 ```
 
-```bash
+```shell
 mkfs.vfat /dev/nvme0n1p2
 mkfs.btrfs -L home /dev/nvme0n1p3 -f
 mkfs.btrfs -L root /dev/nvme0n1p4 -f
 ```
 
-```bash
+```shell
 mount /dev/nvme0n1p4 /mnt/gentoo
 mkdir -p /mnt/gentoo{/boot,/home,/opt,}
 mount /dev/nvme0n1p2 /mnt/gentoo/boot
@@ -106,29 +106,29 @@ mount /dev/nvme0n1p3 /mnt/gentoo/home
 lsblk
 ```
 
-```bash
+```shell
 cd /mnt/gentoo
 links https://www.gentoo.org/downloads/mirrors/
 
 tar xvf stage3-*.tar.xz --xattrs
 ```
 
-```bash
+```shell
 GENTOO_MIRRORS="https://mirrors.tuna.tsinghua.edu.cn/gentoo/"
 sync-uri = rsync://mirrors.tuna.tsinghua.edu.cn/gentoo-portage
 ```
 
-```bash
+```shell
 mkdir /mnt/gentoo/etc/portage/repos.conf
 cp /mnt/gentoo/usr/share/portage/config/repos.conf /mnt/gentoo/etc/portage/repos.conf/gentoo.conf
 nano -w /mnt/gentoo/etc/portage/repos.conf/gentoo.conf 
 ```
 
-```bash
+```shell
 cp -L /etc/resolv.conf /mnt/gentoo/etc/
 ```
 
-```bash
+```shell
 mount -t proc proc /mnt/gentoo/proc
 mount --rbind /sys /mnt/gentoo/sys
 mount --make-rslave /mnt/gentoo/sys
@@ -136,31 +136,31 @@ mount --rbind /dev /mnt/gentoo/dev
 mount --make-rslave /mnt/gentoo/dev
 ```
 
-```bash
-chroot /mnt/gentoo /bin/bash
+```shell
+chroot /mnt/gentoo /bin/shell
 source /etc/profile
 export PS1="(chroot) $PS1"
 ```
 
-```bash
+```shell
 emerge-webrsync
 emerge eselect-repository
 eselect repository enable gentoo-zh
 emerge --sync
 ```
 
-```bash
+```shell
 eselect profile list
 eselect profile set 6
 ```
 
-```bash
+```shell
 emerge --ask ufed
 emerge --ask cpuid2cpuflags
 emerge --ask resolve-march-native
 ```
 
-```bash
+```shell
 echo "Asia/Shanghai" > /etc/timezone
 emerge --config sys-libs/timezone-data
 nano -w /etc/locale.gen
@@ -175,55 +175,55 @@ C.UTF-8 UTF-8
 ```
 
 
-```bash
+```shell
 locale-gen
 ```
 
-```bash
+```shell
 eselect locale list
 eselect locale set 2
 
 env-update && source /etc/profile && export PS1="(chroot) $PS1"
 ```
 
-```bash
+```shell
 emerge --ask sys-kernel/gentoo-sources sys-apps/pciutils sys-kernel/genkernel
 cat /var/lib/portage/world
 
 nano -w /etc/genkernel.conf
 ```
 
-```bash
+```shell
 emerge --ask genfstab
 genfstab -U -p / >> /etc/fstab
 ```
 
-```bash
+```shell
 /dev/nvme0n1p2	        /boot   	vfat	        noauto,noatime                                  0 1
 /dev/nvme0n1p5          /	        ext4	        discard,noatime,commit=600,errors=remount-ro	0 1
 ```
 
-```bash
+```shell
 genkernel all
 ```
 
-```bash
+```shell
 emerge cronie mlocate dhcpcd acpid openssh
 systemctl enable cronie sshd acpid
 ```
 
-```bash
+```shell
 passwd
-useradd -m -G users,wheel,audio,lp,cdrom,portage,cron,video,usb,input -s /bin/bash galudisu
+useradd -m -G users,wheel,audio,lp,cdrom,portage,cron,video,usb,input -s /bin/shell galudisu
 passwd galudisu
 ```
 
-```bash
+```shell
 emerge sudo
 visudo
 ```
 
-```bash
+```shell
 emerge net-wireless/iw net-wireless/wpa_supplicant networkmanager
 systemctl enable NetworkManager bluetooth
 emerge nftables
@@ -232,14 +232,14 @@ eselect iptables list
 eselect iptables set 2
 ```
 
-```bash
+```shell
 emerge sys-boot/grub:2
 ## there's a bug in `--removable` in new version grub2 while it's merge-usr distribution.
 grub-install --target=x86_64-efi --efi-directory=/boot --removable
 grub-mkconfig -o /boot/grub/grub.cfg
 ```
 
-```bash
+```shell
 emerge gnome vim
 gpasswd -a galudisu plugdev
 systemctl enable gdm
@@ -247,7 +247,7 @@ systemctl enable gdm
 emerge autojump tmux
 ```
 
-```bash
+```shell
 timedatectl set-ntp true
 timedatectl set-timezone Asia/Shanghai
 
@@ -257,7 +257,7 @@ systemctl daemon-reexec
 hostnamectl  set-hostname <hostname>
 ```
 
-```bash
+```shell
 exit
 cd
 umount -l /mnt/gentoo/dev{/shm,/pts,}
@@ -267,7 +267,7 @@ reboot
 
 ## KVM
 
-```bash
+```shell
 minikube start --driver=kvm2 --extra-config=kubelet.cgroup-driver=systemd --image-mirror-country='cn' --registry-mirror='https://guqcep47.mirror.aliyuncs.com' --image-repository='registry.cn-hangzhou.aliyuncs.com/google_containers' --kubernetes-version=v1.23.8
 ```
 
@@ -275,7 +275,7 @@ minikube start --driver=kvm2 --extra-config=kubelet.cgroup-driver=systemd --imag
 
 https://wiki.gentoo.org/wiki/Recommended_applications
 
-```bash
+```shell
 emerge --ask foliate evince gnote libreoffice firefox evolution geary qbittorrent imagemagick gimp flameshot inkscape shotwell mpv vlc smplayer nfs-utils vscode usbview gparted filezilla xournalpp geogebra-bin octave ibus-libpinyin
 ```
 
@@ -285,28 +285,36 @@ https://wiki.gentoo.org/wiki/Eselect/Repository
 ## Fonts
 https://wiki.gentoo.org/wiki/Fontconfig#Picking_fonts
 
-```bash
+```shell
 emerge --ask liberation-fonts libertine noto dejavu droid sil-gentium ubuntu-font-family urw-fonts corefonts unifont wqy-zenhei wqy-microhei media-fonts/wqy-bitmapfont media-fonts/noto-emoji media-fonts/cascadia-code hack media-fonts/fira-code media-fonts/fira-mono media-fonts/fira-sans media-fonts/powerline-symbols media-fonts/nerd-fonts media-fonts/symbols-nerd-font media-fonts/powerline-symbols
 ```
 
 ## Flatpak
 
-```bash
+```shell
 emerge --ask sys-apps/flatpak
 flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+```
+
+## Docker
+
+```shell
+emerge --ask app-containers/docker-compose app-containers/docker-cli app-containers/docker-buildx app-containers/docker
+usermod -aG docker galudisu
+systemctl enable docker.service
 ```
 
 ## Libinput
 
 https://wiki.gentoo.org/wiki/Libinput
 
-```bash
+```shell
 cp /usr/share/X11/xorg.conf.d/40-libinput.conf /etc/X11/xorg.conf.d/
 ```
 
 Edit `vim etc/X11/xorg.conf.d/40-libinput.conf`
 
-```bash
+```shell
 Section "InputClass"
      Identifier "libinput touchpad catchall"
      MatchIsTouchpad "on"
@@ -324,7 +332,7 @@ touchpad not detected: https://wiki.gentoo.org/wiki/Asus_Tuf_Gaming_fx505dy#Touc
 
 audio no work: https://www.gentoo.org/support/news-items/2022-07-29-pipewire-sound-server.html
 
-```bash
+```shell
 systemctl --global disable pulseaudio.service pulseaudio.socket
 systemctl --global enable pipewire.service pipewire-pulse.socket
 systemctl --global --force enable wireplumber.service
@@ -335,7 +343,7 @@ systemctl --global --force enable wireplumber.service
 
 tl/dr
 
-```bash
+```shell
 sudo nano /usr/share/glib-2.0/schemas/org.gnome.desktop.interface.gschema.xml
 ```
 
@@ -348,7 +356,7 @@ Change the default value to 2 (or your desired scale factor):
 
 and then running:
 
-```bash
+```shell
 sudo glib-compile-schemas /usr/share/glib-2.0/schemas
 ```
 
@@ -357,6 +365,6 @@ This fixed it for me. Let me know if it works for you as well.
 
 ## dev-*
 
-```bash
+```shell
 sudo emerge --ask maven-bin gradle-bin sbt-bin
 ```
