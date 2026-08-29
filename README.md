@@ -16,6 +16,16 @@ Also make a reference of
 > `install.sh` 默认会自动启用并同步 **gentoo-zh** overlay（chroot 阶段早期、装其它东西之前）
 > ——它会在装 `dev-vcs/git` 后单独 `emerge --sync --repo gentoo-zh`；如需关闭：
 > `CONFIG_GENTOO_ZH=no sudo bash install.sh` 或交互时选 n。
+>
+> 字体 (Powerlevel10k 相关)
+> - 脚本在 --zsh 阶段会尝试安装 Nerd Font（Powerlevel10k 推荐）。优先使用 Gentoo 包 `app-fonts/nerd-fonts`；若包不可用或网络受限，会回退到从 GitHub Releases 下载 Meslo.zip（MesloLGS Nerd Font）并安装到 `/usr/local/share/fonts/nerd-fonts`，之后运行 `fc-cache`。
+> - 如果在中国大陆或其它受限网络，请设置 `CONFIG_GITHUB_BASE` 指向可用镜像（例如 `https://ghproxy.com`），或手动把 Meslo.zip 放在可访问位置并在安装后复制到 `/usr/local/share/fonts/nerd-fonts` 并运行 `fc-cache`。
+>
+> 单文件下载场景（只拿到 `install.sh`）
+> - 若用户只下载了单个 `install.sh`，脚本会尝试从 GitHub 仓库（默认 `barudisshu/gentoo_amd_r7`）下载仓库 tarball 并提取缺失的辅助文件（`make.conf`、`genkernel.conf`、`6.18.48`、`etc/portage/package.use`）。
+> - 若仓库 tarball 不可达，请设置 `CONFIG_GITHUB_BASE` 或直接 git clone 整个仓库以保证完整性。
+> - 示例：
+>   `CONFIG_GITHUB_BASE=https://ghproxy.com sudo bash install.sh --unattended`
 
 ## Prepare
 
