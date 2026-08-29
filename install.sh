@@ -24,6 +24,8 @@
 #   非交互（跳过提问，全部用环境变量/默认值）:
 #     CONFIG_DISK=/dev/nvme0n1 CONFIG_INITSYS=openrc CONFIG_ENCRYPT=yes \
 #       sudo bash install.sh --unattended
+#   覆盖 gentoo-zh（默认 yes）:
+#     CONFIG_GENTOO_ZH=no sudo bash install.sh
 #
 set -euo pipefail
 
@@ -37,6 +39,7 @@ CONFIG_HOSTNAME="${CONFIG_HOSTNAME:-gentoo}"
 CONFIG_TIMEZONE="${CONFIG_TIMEZONE:-Asia/Shanghai}"
 CONFIG_ENCRYPT="${CONFIG_ENCRYPT:-yes}"           # yes/no：是否加密 root+home
 CONFIG_INITSYS="${CONFIG_INITSYS:-systemd}"         # systemd / openrc（init 系统）
+CONFIG_GENTOO_ZH="${CONFIG_GENTOO_ZH:-yes}"         # yes/no：启用 gentoo-zh overlay
 CONFIG_STAGE3_URL=""                               # 留空则阶段一后手动放 stage3
 
 # 分区自动化参数（可覆盖；留空则按磁盘容量自动计算）
@@ -165,7 +168,13 @@ interactive_config() {
     *) CONFIG_INITSYS=systemd ;;
   esac
 
-  info "配置结果: 磁盘=$CONFIG_DISK 主机名=$CONFIG_HOSTNAME 用户=$CONFIG_USER 时区=$CONFIG_TIMEZONE init=${CONFIG_INITSYS} 加密=${CONFIG_ENCRYPT}"
+  if confirm "启用 gentoo-zh overlay？" "${CONFIG_GENTOO_ZH/yes/y}"; then
+    CONFIG_GENTOO_ZH=yes
+  else
+    CONFIG_GENTOO_ZH=no
+  fi
+
+  info "配置结果: 磁盘=$CONFIG_DISK 主机名=$CONFIG_HOSTNAME 用户=$CONFIG_USER 时区=$CONFIG_TIMEZONE init=${CONFIG_INITSYS} 加密=${CONFIG_ENCRYPT} gentoo-zh=${CONFIG_GENTOO_ZH}"
 }
 
 # ---------------------------------------------------------------------------
@@ -454,7 +463,16 @@ chroot_setup() {
   source /etc/profile
   emerge-webrsync || warn "emerge-webrsync 失败，继续尝试 --sync"
   emerge -1 eselect-repository
-  eselect repository enable gentoo-zh 2>/dev/null || true
+
+  # 可选：启用并同步 gentoo-zh overlay（git 仓库，需先装 git）
+  if [[ "${CONFIG_GENTOO_ZH:-yes}" == "yes" ]]; then
+    eselect repository enable gentoo-zh || die "启用 gentoo-zh 失败"
+    emerge -1 dev-vcs/git
+    emerge --sync --repo gentoo-zh || warn "gentoo-zh 同步失败"
+  else
+    info "CONFIG_GENTOO_ZH=no，跳过 gentoo-zh"
+  fi
+
   emerge --sync || true
 
   # profile：提示用户选择与 init 系统匹配的 desktop profile
@@ -647,6 +665,7 @@ CONFIG_HOSTNAME=$CONFIG_HOSTNAME
 CONFIG_TIMEZONE=$CONFIG_TIMEZONE
 CONFIG_ENCRYPT=$CONFIG_ENCRYPT
 CONFIG_INITSYS=$CONFIG_INITSYS
+CONFIG_GENTOO_ZH=$CONFIG_GENTOO_ZH
 CONFIG_DESKTOP=$CONFIG_DESKTOP
 CONFIG_ESP_SIZE=$ESP_MIB
 CONFIG_ROOT_SIZE=$ROOT_MIB

@@ -12,6 +12,10 @@ Also make a reference of
 > 并据所选分支自动下载对应的 stage3、提示匹配的 profile、按 systemctl / rc-update 启用服务。
 > 下方手动步骤以 systemd 为例；OpenRC 用户把 stage3 换成 `stage3-amd64-openrc-*`、
 > 选不含 systemd 的 profile，并把 `systemctl enable X` 换成 `rc-update add X default` 即可。
+>
+> `install.sh` 默认会自动启用并同步 **gentoo-zh** overlay（chroot 阶段早期、装其它东西之前）
+> ——它会在装 `dev-vcs/git` 后单独 `emerge --sync --repo gentoo-zh`；如需关闭：
+> `CONFIG_GENTOO_ZH=no sudo bash install.sh` 或交互时选 n。
 
 ## Prepare
 
@@ -204,8 +208,9 @@ export PS1="(chroot) $PS1"
 ```shell
 emerge-webrsync
 emerge eselect-repository
+emerge dev-vcs/git        # gentoo-zh 是 git overlay，需要 git
 eselect repository enable gentoo-zh
-emerge --sync
+emerge --sync --repo gentoo-zh
 ```
 
 ```shell
