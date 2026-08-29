@@ -27,6 +27,9 @@
 #       sudo bash install.sh --unattended
 #   覆盖 gentoo-zh（默认 yes）:
 #     CONFIG_GENTOO_ZH=no sudo bash install.sh
+#   网络（中国网络：下载/clone 自动重试多次；GitHub 完全被墙时可换镜像）:
+#     CONFIG_GIT_RETRIES=8 CONFIG_GIT_RETRY_SLEEP=5 CONFIG_GITHUB_BASE=https://ghproxy.com \
+#       sudo bash install.sh
 #
 set -euo pipefail
 
@@ -55,6 +58,12 @@ KERNEL_CONF_SRC="${KERNEL_CONF_SRC:-/root/6.18.48}"         # 内核配置（含
 PKG_USE_DIR="${PKG_USE_DIR:-/root/package.use}"             # 仓库 package.use/ 目录（拷入 /etc/portage/）
 CONFIG_DESKTOP="${CONFIG_DESKTOP:-gnome}"                    # 桌面：gnome / none（--desktop 阶段使用）
 
+# 网络重试参数（中国网络环境下 clone/下载不稳，默认 5 次 / 间隔 3s）
+CONFIG_GIT_RETRIES="${CONFIG_GIT_RETRIES:-5}"
+CONFIG_GIT_RETRY_SLEEP="${CONFIG_GIT_RETRY_SLEEP:-3}"
+# GitHub 镜像前缀（GitHub 被墙完全不可达时，设为镜像如 https://ghproxy.com/）
+CONFIG_GITHUB_BASE="${CONFIG_GITHUB_BASE:-https://github.com}"
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # ---------------------------------------------------------------------------
@@ -64,6 +73,18 @@ die() { echo -e "\e[31m[错误]\e[0m $*" >&2; exit 1; }
 info() { echo -e "\e[32m[==>]\e[0m $*"; }
 warn() { echo -e "\e[33m[警告]\e[0m $*" >&2; }
 has_cmd() { command -v "$1" >/dev/null 2>&1; }
+
+# 网络重试：retry <次数> [间隔秒] <cmd...>；成功返回 0，全部失败返回非 0
+retry() {
+  local n="${1:-3}" sleep_s="${2:-3}" tries=0
+  shift 2 2>/dev/null || { n=3; sleep_s=3; }
+  until "$@"; do
+    tries=$((tries + 1))
+    warn "命令失败($tries/$n)，${sleep_s} 秒后重试: $*"
+    (( tries >= n )) && return 1
+    sleep "$sleep_s"
+  done
+}
 
 # 交互读取：$1=提示 $2=默认值；输出到全局 read_val
 read_val() {
@@ -384,7 +405,9 @@ extract_stage3() {
   if [[ -n "$url" ]]; then
     bn="${url##*/}"
     info "下载 stage3: $url"
-    curl -fL --progress-bar -o "$bn" "$url" || die "stage3 下载失败: $url"
+    # 继续传输 + 失败重试（网络不稳时更可靠）
+    retry "$CONFIG_GIT_RETRIES" "$CONFIG_GIT_RETRY_SLEEP" \
+      curl -fL -C - --progress-bar -o "$bn" "$url" || die "stage3 下载失败: $url"
   else
     warn "无法自动探测 stage3 地址。"
     if confirm "用 links 手动浏览下载 stage3？" n; then
@@ -589,8 +612,12 @@ setup_zsh() {
     local home="$1" owner="$2"
     mkdir -p "$home/.zsh"
     if [[ ! -d "$home/.zsh/zsh-autosuggestions/.git" ]]; then
-      git clone --depth 1 https://github.com/zsh-users/zsh-autosuggestions \
-        "$home/.zsh/zsh-autosuggestions" || warn "clone zsh-autosuggestions 失败"
+      # 中国网络环境：clone 失败自动重试多次；GitHub 完全被墙时可用镜像前缀
+      # （CONFIG_GITHUB_BASE 如 https://ghproxy.com/ 会拼成 ghproxy.com/zsh-users/...）
+      local clone_url="${CONFIG_GITHUB_BASE%/}/zsh-users/zsh-autosuggestions"
+      retry "$CONFIG_GIT_RETRIES" "$CONFIG_GIT_RETRY_SLEEP" \
+        git clone --depth 1 "$clone_url" \
+        "$home/.zsh/zsh-autosuggestions" || warn "clone zsh-autosuggestions 多次失败（可设 CONFIG_GITHUB_BASE 换镜像）"
     fi
     [[ -e "$home/.zshrc" ]] || : > "$home/.zshrc"
     grep -q "powerlevel10k" "$home/.zshrc" 2>/dev/null && return 0

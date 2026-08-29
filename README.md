@@ -394,10 +394,14 @@ reboot
 
 #### zsh + Powerlevel10k + zsh-autosuggestions（可选，`--zsh` 已自动完成）
 
+> `--zsh` 在 clone autosuggestions 时会**自动重试多次**（默认 5 次 / 间隔 3s，
+> 用 `CONFIG_GIT_RETRIES`、`CONFIG_GIT_RETRY_SLEEP` 覆盖）。若 GitHub 完全被墙，
+> 设镜像前缀即可：`CONFIG_GITHUB_BASE=https://ghproxy.com bash /root/install.sh --zsh`。
+
 ```shell
 emerge app-shells/zsh app-shells/zsh-completions app-shells/powerlevel10k dev-vcs/git
 chsh -s /bin/zsh            # 切换默认 shell（root / 各用户都执行）
-# autosuggestions 主树/gentoo-zh 均无，用官方 git clone 方式：
+# autosuggestions 主树/gentoo-zh 均无，用官方 git clone 方式（失败自动重试）：
 git clone --depth 1 https://github.com/zsh-users/zsh-autosuggestions ~/.zsh/zsh-autosuggestions
 # ~/.zshrc 中加入：
 #   [[ -d ~/.zsh/zsh-autosuggestions ]] && source ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh
