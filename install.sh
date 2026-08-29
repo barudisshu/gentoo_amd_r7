@@ -17,7 +17,7 @@
 #   阶段二/三（chroot 内）:
 #     bash /root/install.sh --chroot      # 基础 + 内核
 #     bash /root/install.sh --desktop     # 桌面(GNOME)，安装前确认 package.use
-#     bash /root/install.sh --zsh         # (可选) zsh + Powerlevel10k 主题
+#     bash /root/install.sh --zsh         # (可选) zsh + Powerlevel10k + autosuggestions
 #     bash /root/install.sh --grub        # GRUB
 #   尾处理（ISO 环境）:
 #     sudo bash install.sh --final
@@ -577,20 +577,23 @@ setup_desktop() {
 }
 
 # ---------------------------------------------------------------------------
-# 阶段：zsh + Powerlevel10k（chroot 内，可选运行）
+# 阶段：zsh + Powerlevel10k + zsh-autosuggestions（chroot 内，可选运行）
+#   autosuggestions 主树/gentoo-zh 均无，用官方 git clone 方式装入 ~/.zsh/
 # ---------------------------------------------------------------------------
 setup_zsh() {
   require_root
-  emerge app-shells/zsh app-shells/zsh-completions app-shells/powerlevel10k
+  emerge app-shells/zsh app-shells/zsh-completions app-shells/powerlevel10k dev-vcs/git
 
-  local zshrc
-  zshrc='source "/usr/share/zsh-theme-powerlevel10k/powerlevel10k.zsh-theme"'
-
-  # 写入 ~/.zshrc（首次则创建）：completion + Powerlevel10k + p10k 配置
-  write_zshrc() {
-    local home="$1"
+  # 为指定 home 准备 zsh 环境：clone autosuggestions + 写入 ~/.zshrc
+  setup_user_zsh() {
+    local home="$1" owner="$2"
+    mkdir -p "$home/.zsh"
+    if [[ ! -d "$home/.zsh/zsh-autosuggestions/.git" ]]; then
+      git clone --depth 1 https://github.com/zsh-users/zsh-autosuggestions \
+        "$home/.zsh/zsh-autosuggestions" || warn "clone zsh-autosuggestions 失败"
+    fi
     [[ -e "$home/.zshrc" ]] || : > "$home/.zshrc"
-    grep -q "$zshrc" "$home/.zshrc" 2>/dev/null && return 0
+    grep -q "powerlevel10k" "$home/.zshrc" 2>/dev/null && return 0
     cat >> "$home/.zshrc" <<'ZSHRC'
 
 # History
@@ -603,25 +606,28 @@ setopt appendhistory incappendhistory histignorealldups sharehistory
 autoload -Uz compinit && compinit
 zstyle ':completion:*' use-cache 1
 
-# Powerlevel10k（可选 /usr/share/zsh/site-functions 亦可）
+# zsh-autosuggestions（git clone 方式，需先装 git）
+[[ -d ~/.zsh/zsh-autosuggestions ]] && source ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh
+
+# Powerlevel10k
 source "/usr/share/zsh-theme-powerlevel10k/powerlevel10k.zsh-theme"
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 ZSHRC
+    chown -R "$owner" "$home/.zsh" "$home/.zshrc"
   }
 
   # root 默认 shell
   chsh -s /bin/zsh
-  write_zshrc /root
+  setup_user_zsh /root root
 
   # 目标用户（若存在）
   if [[ -n "$CONFIG_USER" ]] && id -u "$CONFIG_USER" >/dev/null 2>&1; then
     chsh -s /bin/zsh "$CONFIG_USER"
     local home; home="$(getent passwd "$CONFIG_USER" | cut -d: -f6)"
-    write_zshrc "$home"
-    chown "$CONFIG_USER":"$CONFIG_USER" "$home/.zshrc"
+    setup_user_zsh "$home" "$CONFIG_USER"
   fi
 
-  info "zsh + Powerlevel10k 已就绪。首次登录运行 'p10k configure' 完成主题配置向导；"
+  info "zsh + Powerlevel10k + zsh-autosuggestions 已就绪。首次登录运行 'p10k configure' 完成主题向导；"
   info "主题图标需 Nerd Font（如 MesloLGS NF），请到终端设置里切换字体。"
 }
 

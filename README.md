@@ -392,12 +392,15 @@ reboot
 > ```
 
 
-#### zsh + Powerlevel10k（可选，`--zsh` 已自动完成）
+#### zsh + Powerlevel10k + zsh-autosuggestions（可选，`--zsh` 已自动完成）
 
 ```shell
-emerge app-shells/zsh app-shells/zsh-completions app-shells/powerlevel10k
+emerge app-shells/zsh app-shells/zsh-completions app-shells/powerlevel10k dev-vcs/git
 chsh -s /bin/zsh            # 切换默认 shell（root / 各用户都执行）
+# autosuggestions 主树/gentoo-zh 均无，用官方 git clone 方式：
+git clone --depth 1 https://github.com/zsh-users/zsh-autosuggestions ~/.zsh/zsh-autosuggestions
 # ~/.zshrc 中加入：
+#   [[ -d ~/.zsh/zsh-autosuggestions ]] && source ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh
 #   source "/usr/share/zsh-theme-powerlevel10k/powerlevel10k.zsh-theme"
 #   [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 # 首次登录运行 p10k configure 完成主题向导；图标需 Nerd Font（如 MesloLGS NF）。
