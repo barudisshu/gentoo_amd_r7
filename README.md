@@ -1,6 +1,7 @@
 # Gentoo AMD Ryzen 7
 
-Also make a reference of 
+Also make a reference of
+
 - https://wiki.gentoo.org/wiki/Lenovo_Ideapad_Slim_7
 - https://wiki.gentoo.org/wiki/Lenovo_Thinkpad_T495
 
@@ -53,7 +54,7 @@ passwd
 
 ```
 
-## firmware 
+## firmware
 
 Ryzen 7 5800HZ
 
@@ -66,26 +67,53 @@ amd-ucode/microcode_amd_fam19h.bin,amd/amd_sev_fam19h_model0xh.sbin,amd/amd_sev_
 ```
 
 Ryzen AI 7
+
 ```
-amd-ucode/microcode_amd_fam19h.bin,amd/amd_sev_fam19h_model0xh.sbin,amd/amd_sev_fam19h_model1xh.sbin,amd/amd_sev_fam19h_modelaxh.sbin,amd/amd_sev_fam1ah_model0xh.sbin,amdgpu/psp_14_0_4_toc.bin,amdgpu/psp_14_0_4_ta.bin,amdgpu/dcn_3_5_dmcub.bin,amdgpu/gc_11_5_2_pfp.bin,amdgpu/gc_11_5_2_me.bin,amdgpu/gc_11_5_2_rlc.bin,amdgpu/gc_11_5_2_mec.bin,amdgpu/gc_11_5_2_imu.bin,amdgpu/sdma_6_1_2.bin,amdgpu/vcn_4_0_5.bin,amdgpu/gc_11_5_2_mes_2.bin,amdgpu/gc_11_5_2_mes1.bin,amdgpu/vpe_6_1_3.bin,amdnpu/17f0_11/npu.sbin
+amd-ucode/microcode_amd_fam19h.bin,amd/amd_sev_fam19h_model0xh.sbin,amd/amd_sev_fam19h_model1xh.sbin,amd/amd_sev_fam1ah_model0xh.sbin,amdgpu/psp_14_0_2_ta.bin,amdgpu/psp_14_0_2_sos.bin,amdgpu/dcn_4_0_1_dmcub.bin,amdgpu/gc_11_5_1_pfp.bin,amdgpu/gc_11_5_1_me.bin,amdgpu/gc_11_5_1_rlc.bin,amdgpu/gc_11_5_1_mec.bin,amdgpu/gc_11_5_1_imu.bin,amdgpu/sdma_7_0_1.bin,amdgpu/vcn_5_0_1.bin,amdgpu/smu_14_0_2.bin,amdgpu/umsch_mm_4_0_0.bin,amdgpu/vpe_6_1_1.bin,amdnpu/17f0_20/npu.sbin,mediatek/mt7925/WIFI_MT7925_PATCH_MCU_1_1_hdr.bin,mediatek/mt7925/WIFI_RAM_CODE_MT7925_1_1.bin,mediatek/mt7925/BT_RAM_CODE_MT7925_1_1_hdr.bin,rtl_nic/rtl8168h-2.fw,rtl_nic/rtl8156b-2.fw
 ```
 
+### Ryzen AI 7 — 已加载 (Krackan / Radeon 840M)
+
+Hardware: AMD Krackan (Zen 5 APU), AMD Radeon 840M/860M (RDNA 3.5), AMD NPU `[1022:17f0]` rev 20, MT7925 Wi-Fi
+7/Bluetooth, RTL8111/8168 rev15 ethernet, RTL8156 USB 2.5G ethernet.
+
+| 模块     | 固件绝对路径                                                              | 描述                          |
+|----------|---------------------------------------------------------------------------|-------------------------------|
+| amdgpu   | `/lib/firmware/amdgpu/dcn_4_0_1_dmcub.bin`                                | 显示引擎 DMUB 固件            |
+| amdgpu   | `/lib/firmware/amdgpu/vcn_5_0_1.bin`                                      | 视频编解码 (VCN) 固件         |
+| amdgpu   | `/lib/firmware/amdgpu/gc_11_5_1_rlc.bin`                                  | 渲染核心 (RLC) 微码           |
+| amdgpu   | `/lib/firmware/amdgpu/gc_11_5_1_mec.bin`                                  | 计算队列 (MEC) 微码           |
+| amdgpu   | `/lib/firmware/amdgpu/gc_11_5_1_me.bin`                                   | 微引擎 (ME) 固件              |
+| amdgpu   | `/lib/firmware/amdgpu/gc_11_5_1_pfp.bin`                                  | 预取前端 (PFP) 固件           |
+| amdgpu   | `/lib/firmware/amdgpu/gc_11_5_1_imu.bin`                                  | 初始微码 (IMU)                |
+| amdgpu   | `/lib/firmware/amdgpu/smu_14_0_2.bin`                                     | 电源/散热管理单元 (SMU) 固件  |
+| amdgpu   | `/lib/firmware/amdgpu/psp_14_0_2_sos.bin`                                 | 平台安全处理器 (PSP) SOS 固件 |
+| amdgpu   | `/lib/firmware/amdgpu/psp_14_0_2_ta.bin`                                  | PSP Trusted Application 固件  |
+| amdgpu   | `/lib/firmware/amdgpu/umsch_mm_4_0_0.bin`                                 | 用户态调度器 (多媒体) 固件    |
+| amdgpu   | `/lib/firmware/amdgpu/sdma_7_0_1.bin`                                     | System DMA 引擎固件           |
+| amdgpu   | `/lib/firmware/amdgpu/vpe_6_1_1.bin`                                      | 视频处理引擎 (VPE) 固件       |
+| amdxdna  | `/lib/firmware/amdnpu/17f0_20/npu.sbin`                                   | AI 神经处理单元 (NPU) 固件    |
+| ccp      | `/lib/firmware/amd/amd_sev_fam19h_model1xh.sbin`                          | AMD SEV 安全加密虚拟化固件    |
+| mt7925e  | `/lib/firmware/mediatek/mt7925/WIFI_MT7925_PATCH_MCU_1_1_hdr.bin`         | WiFi Patch MCU 微码           |
+| mt7925e  | `/lib/firmware/mediatek/mt7925/WIFI_RAM_CODE_MT7925_1_1.bin`              | WiFi 主固件                   |
+| btusb    | `/lib/firmware/mediatek/mt7925/BT_RAM_CODE_MT7925_1_1_hdr.bin`            | 蓝牙固件                      |
+| r8169    | `/lib/firmware/rtl_nic/rtl8168h-2.fw`                                     | 以太网 PHY 固件               |
+| r8152    | `/lib/firmware/rtl_nic/rtl8156b-2.fw`                                     | USB 2.5G 网卡固件             |
+| cfg80211 | `/lib/firmware/regulatory.db` → `/etc/alternatives/regulatory.db`         | 无线频谱法规数据库            |
+| cfg80211 | `/lib/firmware/regulatory.db.p7s` → `/etc/alternatives/regulatory.db.p7s` | regulatory.db 数字签名        |
 
 ```shell
 parted /dev/nvme0n1
 
 (parted) mklabel gpt
 (parted) unit mib                                                         
-(parted) mkpart ESP fat32 1 513
-(parted) set 1 bios_grub on                                               
-(parted) name 1 grub                                                      
-(parted) mkpart primary 513 1537                                           
-(parted) name 2 boot                                                      
-(parted) set 2 boot on
+(parted) mkpart primary fat32 1 513
+(parted) set 1 esp on                                                      
+(parted) name 1 boot                                                      
 (parted) mkpart primary 1537 656897
-(parted) name 3 home
+(parted) name 2 root
 (parted) mkpart primary 656897 100%                                          
-(parted) name 4 root                                                      
+(parted) name 3 home                                                      
 (parted) print                                                          
 
 
@@ -93,16 +121,33 @@ parted /dev/nvme0n1
 ```
 
 ```shell
-mkfs.vfat /dev/nvme0n1p2
-mkfs.btrfs -L home /dev/nvme0n1p3 -f
-mkfs.btrfs -L root /dev/nvme0n1p4 -f
+mkfs.vfat -F32 /dev/nvme0n1p1
+mkdir -p /mnt/gentoo
+
+# 加载 LUKS 所需模块 (若未内建)
+modprobe dm-crypt
+
+# 加密 root 分区 (p2) 并创建 ext4 文件系统
+cryptsetup luksFormat --type luks2 /dev/nvme0n1p2
+cryptsetup open /dev/nvme0n1p2 root
+mkfs.ext4 -L root /dev/mapper/root
+
+# 加密 home 分区 (p3) 并创建 ext4 文件系统
+cryptsetup luksFormat --type luks2 /dev/nvme0n1p3
+cryptsetup open /dev/nvme0n1p3 home
+mkfs.ext4 -L home /dev/mapper/home
+
+# 可选：/boot 另建分区并加密 —— 需配合 GRUB 的 cryptodisk 使用
+# cryptsetup luksFormat --type luks2 /dev/nvme0n1p2
+# cryptsetup open /dev/nvme0n1p2 boot
+# mkfs.ext4 -L boot /dev/mapper/boot
 ```
 
 ```shell
-mount /dev/nvme0n1p4 /mnt/gentoo
+mount /dev/mapper/root /mnt/gentoo
 mkdir -p /mnt/gentoo{/boot,/home,/opt,}
-mount /dev/nvme0n1p2 /mnt/gentoo/boot
-mount /dev/nvme0n1p3 /mnt/gentoo/home
+mount /dev/nvme0n1p1 /mnt/gentoo/boot
+mount /dev/mapper/home /mnt/gentoo/home
 lsblk
 ```
 
@@ -129,6 +174,8 @@ cp -L /etc/resolv.conf /mnt/gentoo/etc/
 ```
 
 ```shell
+# 注意：此处假定加密分区已在 "mkfs / mount" 步骤中解锁并挂载到 /mnt/gentoo 下
+# （cryptsetup open + mount /dev/mapper/root|home）。切勿在此处再次打开它们。
 mount -t proc proc /mnt/gentoo/proc
 mount --rbind /sys /mnt/gentoo/sys
 mount --make-rslave /mnt/gentoo/sys
@@ -137,7 +184,7 @@ mount --make-rslave /mnt/gentoo/dev
 ```
 
 ```shell
-chroot /mnt/gentoo /bin/shell
+chroot /mnt/gentoo /bin/bash
 source /etc/profile
 export PS1="(chroot) $PS1"
 ```
@@ -151,7 +198,9 @@ emerge --sync
 
 ```shell
 eselect profile list
-eselect profile set 6
+# 选择带 systemd + desktop 的 profile，例如：
+# [21]  default/linux/amd64/23.0/desktop/gnome/systemd (stable)
+eselect profile set <编号>
 ```
 
 ```shell
@@ -174,7 +223,6 @@ zh_CN.UTF-8 UTF-8
 C.UTF-8 UTF-8
 ```
 
-
 ```shell
 locale-gen
 ```
@@ -187,24 +235,42 @@ env-update && source /etc/profile && export PS1="(chroot) $PS1"
 ```
 
 ```shell
-emerge --ask sys-kernel/gentoo-sources sys-apps/pciutils sys-kernel/genkernel
+emerge --ask sys-kernel/gentoo-sources sys-apps/pciutils sys-kernel/genkernel sys-fs/cryptsetup
 cat /var/lib/portage/world
 
 nano -w /etc/genkernel.conf
 ```
 
+在 `/etc/genkernel.conf` 中启用 LUKS 支持：
+```
+# genkernel.conf
+LUKS="yes"
+DMCRYPT="yes"
+# 若 /boot 也加密，则加上：
+# CRYPTBOOT="yes"
+```
+
 ```shell
 emerge --ask genfstab
-genfstab -U -p / >> /etc/fstab
+genfstab -U / >> /etc/fstab
 ```
 
 ```shell
-/dev/nvme0n1p2	        /boot   	vfat	        noauto,noatime                                  0 1
-/dev/nvme0n1p5          /	        ext4	        discard,noatime,commit=600,errors=remount-ro	0 1
+# /etc/crypttab —— 开机时自动解锁加密分区
+# 示例：<target> <source_device> <key_file> <options>
+root   /dev/nvme0n1p2  none  luks,discard
+home   /dev/nvme0n1p3  none  luks,discard
 ```
 
 ```shell
-genkernel all
+# /etc/fstab (设备可用 UUID/LABEL 替代)
+/dev/mapper/root   /        ext4  noatime,commit=600,errors=remount-ro  0 1
+/dev/mapper/home   /home    ext4  noatime,commit=600                    0 2
+/dev/nvme0n1p1     /boot    vfat  noatime                                     0 1
+```
+
+```shell
+genkernel --luks all
 ```
 
 ```shell
@@ -214,7 +280,7 @@ systemctl enable cronie sshd acpid
 
 ```shell
 passwd
-useradd -m -G users,wheel,audio,lp,cdrom,portage,cron,video,usb,input -s /bin/shell galudisu
+useradd -m -G users,wheel,audio,lp,cdrom,portage,cron,video,usb,input -s /bin/bash galudisu
 passwd galudisu
 ```
 
@@ -236,6 +302,9 @@ eselect iptables set 2
 emerge sys-boot/grub:2
 ## there's a bug in `--removable` in new version grub2 while it's merge-usr distribution.
 grub-install --target=x86_64-efi --efi-directory=/boot --removable
+
+# 若 /boot (ESP) 未加密，仅 root/home 加密，则 GRUB 无需 cryptodisk；
+# 根分区解密由 initramfs 依据 /etc/crypttab 在启动时提示输入口令。
 grub-mkconfig -o /boot/grub/grub.cfg
 ```
 
@@ -260,9 +329,18 @@ hostnamectl  set-hostname <hostname>
 ```shell
 exit
 cd
-umount -l /mnt/gentoo/dev{/shm,/pts,}
-umount -l /mnt/gentoo{/boot,/proc,}
+umount -R /mnt/gentoo
+# 若仍有挂载残留，强制卸载后再关闭加密卷
+# umount -l /mnt/gentoo/home
+cryptsetup close home
+cryptsetup close root
 reboot
+```
+
+若启动时 initramfs 未自动解锁，可手动解锁根分区：
+```shell
+# 在 GRUB 菜单按 'e' 在内核参数追加 crypt_root=/dev/nvme0n1p2 或使用 shell
+cryptsetup open /dev/nvme0n1p2 root
 ```
 
 ## KVM
@@ -280,9 +358,11 @@ emerge --ask foliate evince gnote libreoffice firefox evolution geary qbittorren
 ```
 
 ## Repository
+
 https://wiki.gentoo.org/wiki/Eselect/Repository
 
 ## Fonts
+
 https://wiki.gentoo.org/wiki/Fontconfig#Picking_fonts
 
 ```shell
@@ -338,7 +418,6 @@ systemctl --global enable pipewire.service pipewire-pulse.socket
 systemctl --global --force enable wireplumber.service
 ```
 
-
 ## GDM scaling
 
 tl/dr
@@ -350,8 +429,9 @@ sudo nano /usr/share/glib-2.0/schemas/org.gnome.desktop.interface.gschema.xml
 Change the default value to 2 (or your desired scale factor):
 
 ```xml
+
 <key name="scaling-factor" type="u">
-<default>2</default>
+    <default>2</default>
 ```
 
 and then running:
@@ -361,7 +441,6 @@ sudo glib-compile-schemas /usr/share/glib-2.0/schemas
 ```
 
 This fixed it for me. Let me know if it works for you as well.
-
 
 ## dev-*
 
