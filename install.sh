@@ -32,6 +32,12 @@
 #       sudo bash install.sh
 #
 set -euo pipefail
+# Simple logging: append output to a logfile when running as root
+LOGFILE="${LOGFILE:-/var/log/gentoo_install.log}"
+if [[ "$(id -u)" -eq 0 ]]; then
+  mkdir -p "$(dirname "${LOGFILE}")" 2>/dev/null || true
+  exec > >(tee -a "${LOGFILE}") 2>&1
+fi
 
 # ---------------------------------------------------------------------------
 # 配置变量（可用环境变量覆盖；默认取自 README / 仓库内 make.conf）
@@ -64,7 +70,56 @@ CONFIG_GIT_RETRY_SLEEP="${CONFIG_GIT_RETRY_SLEEP:-3}"
 # GitHub 镜像前缀（GitHub 被墙完全不可达时，设为镜像如 https://ghproxy.com/）
 CONFIG_GITHUB_BASE="${CONFIG_GITHUB_BASE:-https://github.com}"
 
+# 后台自动化（unattended）相关：在 live 环境以 chroot 调用 --chroot/--desktop 等
+# CONFIG_BG_STEPS: 空格分隔的子命令（如 "--chroot --desktop --zsh --grub"）
+CONFIG_BG_STEPS="${CONFIG_BG_STEPS:---chroot --desktop --zsh --grub}"
+CONFIG_BG_RETRIES="${CONFIG_BG_RETRIES:-5}"
+CONFIG_BG_SLEEP="${CONFIG_BG_SLEEP:-60}"
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# 如果用户仅下载单个 install.sh，尝试从仓库自动拉取缺失的辅助文件（make.conf / genkernel.conf / 6.18.48 / etc/portage/package.use）
+REPO_OWNER="${REPO_OWNER:-barudisshu}"
+REPO_NAME="${REPO_NAME:-gentoo_amd_r7}"
+
+fetch_repo_assets() {
+  local needed=("make.conf" "genkernel.conf" "6.18.48" "etc/portage/package.use")
+  local miss=()
+  for p in "${needed[@]}"; do
+    if [[ -e "$SCRIPT_DIR/$p" ]]; then
+      continue
+    fi
+    miss+=("$p")
+  done
+  [[ ${#miss[@]} -gt 0 ]] || return 0
+  info "检测到仓库附件缺失: ${miss[*]}，尝试从 ${CONFIG_GITHUB_BASE%/}/${REPO_OWNER}/${REPO_NAME} 拉取..."
+  local tarurl="${CONFIG_GITHUB_BASE%/}/${REPO_OWNER}/${REPO_NAME}/archive/refs/heads/main.tar.gz"
+  local tmpd tmpf topdir
+  tmpd=$(mktemp -d)
+  tmpf="$tmpd/repo.tar.gz"
+
+  if ! retry "$CONFIG_GIT_RETRIES" "$CONFIG_GIT_RETRY_SLEEP" curl -fL -o "$tmpf" "$tarurl"; then
+    warn "从 main 分支下载失败，尝试 master 分支..."
+    tarurl="${CONFIG_GITHUB_BASE%/}/${REPO_OWNER}/${REPO_NAME}/archive/refs/heads/master.tar.gz"
+    retry "$CONFIG_GIT_RETRIES" "$CONFIG_GIT_RETRY_SLEEP" curl -fL -o "$tmpf" "$tarurl" || die "无法下载仓库 tarball: $tarurl"
+  fi
+
+  tar -xzf "$tmpf" -C "$tmpd" || die "解压仓库失败"
+  topdir=$(find "$tmpd" -maxdepth 1 -type d -name "${REPO_NAME}-*" | head -1)
+  [[ -n "$topdir" ]] || die "未找到解压后的仓库目录"
+
+  for p in "${miss[@]}"; do
+    if [[ -e "$topdir/$p" ]]; then
+      mkdir -p "$(dirname "$SCRIPT_DIR/$p")"
+      cp -a "$topdir/$p" "$SCRIPT_DIR/$p"
+      info "已获取并保存: $p"
+    else
+      warn "仓库中缺少: $p"
+    fi
+  done
+  rm -rf "$tmpd"
+}
+
 
 # ---------------------------------------------------------------------------
 # 工具函数
@@ -127,10 +182,30 @@ partition_dev() { # DISK -> 分区设备（nvme 为 pN，其余按 udev 规则�
 require_root() { [[ "$(id -u)" -eq 0 ]] || die "请以 root 运行"; }
 
 require_tools() {
-  local t
-  for t in parted cryptsetup mkfs.ext4 mkfs.vfat tar links nano blkid curl; do
-    has_cmd "$t" || warn "缺少命令: $t（可先 emerge -1 $t）"
+  local t missing=0
+  # Critical tools
+  for t in parted cryptsetup mkfs.ext4 mkfs.vfat tar curl git grub-install efibootmgr; do
+    if ! has_cmd "$t"; then
+      warn "缺少关键命令: $t（请在 live 环境安装或用 emerge 安装）"
+      missing=1
+    fi
   done
+  # Suggested tools
+  for t in links nano blkid; do
+    has_cmd "$t" || warn "建议安装: $t"
+  done
+  [[ $missing -eq 0 ]] || die "缺少关键工具，无法继续。"
+}
+
+# 清理函数（在出错时尝试卸载/关闭加密卷/swap）
+cleanup() {
+  warn "运行清理..."
+  umount -R "${CONFIG_TARGET:-/mnt/gentoo}" 2>/dev/null || true
+  if [[ "${CONFIG_ENCRYPT:-no}" == "yes" ]]; then
+    cryptsetup close home 2>/dev/null || true
+    cryptsetup close root 2>/dev/null || true
+  fi
+  swapoff "${SWAP_DEV:-}" 2>/dev/null || true
 }
 
 # ---------------------------------------------------------------------------
@@ -348,9 +423,22 @@ prep_disk() {
   # root：可选加密
   modprobe dm-crypt 2>/dev/null || true
   if [[ "$CONFIG_ENCRYPT" == "yes" ]]; then
-    info "为 root 分区 ($P_ROOT) 设置 LUKS 口令..."
-    cryptsetup luksFormat --type luks2 "$P_ROOT"
-    cryptsetup open "$P_ROOT" root
+    info "为 root 分区 ($P_ROOT) 设置 LUKS ..."
+    # 支持无交互密钥：CONFIG_LUKS_KEYFILE 或 CONFIG_LUKS_PASSPHRASE (unattended)
+    if [[ -n "${CONFIG_LUKS_KEYFILE:-}" && -f "$CONFIG_LUKS_KEYFILE" ]]; then
+      cryptsetup luksFormat --type luks2 --key-file "$CONFIG_LUKS_KEYFILE" "$P_ROOT"
+      cryptsetup open --key-file "$CONFIG_LUKS_KEYFILE" "$P_ROOT" root
+    elif [[ -n "${CONFIG_LUKS_PASSPHRASE:-}" && "$UNATTENDED" == "1" ]]; then
+      local _kf
+      _kf=$(mktemp -p /tmp lukskey.XXXXXX)
+      umask 077; printf '%s' "$CONFIG_LUKS_PASSPHRASE" > "$_kf"
+      cryptsetup luksFormat --type luks2 --key-file "$_kf" "$P_ROOT"
+      cryptsetup open --key-file "$_kf" "$P_ROOT" root
+      shred -u "$_kf" 2>/dev/null || rm -f "$_kf"
+    else
+      cryptsetup luksFormat --type luks2 "$P_ROOT"
+      cryptsetup open "$P_ROOT" root
+    fi
     mkfs.ext4 -L root "$CRYPT_ROOT"
   else
     info "root 分区不加密，直接 ext4..."
@@ -359,9 +447,21 @@ prep_disk() {
 
   # home：可选加密
   if [[ "$CONFIG_ENCRYPT" == "yes" ]]; then
-    info "为 home 分区 ($P_HOME) 设置 LUKS 口令..."
-    cryptsetup luksFormat --type luks2 "$P_HOME"
-    cryptsetup open "$P_HOME" home
+    info "为 home 分区 ($P_HOME) 设置 LUKS ..."
+    if [[ -n "${CONFIG_LUKS_KEYFILE:-}" && -f "$CONFIG_LUKS_KEYFILE" ]]; then
+      cryptsetup luksFormat --type luks2 --key-file "$CONFIG_LUKS_KEYFILE" "$P_HOME"
+      cryptsetup open --key-file "$CONFIG_LUKS_KEYFILE" "$P_HOME" home
+    elif [[ -n "${CONFIG_LUKS_PASSPHRASE:-}" && "$UNATTENDED" == "1" ]]; then
+      local _hk
+      _hk=$(mktemp -p /tmp lukskey.XXXXXX)
+      umask 077; printf '%s' "$CONFIG_LUKS_PASSPHRASE" > "$_hk"
+      cryptsetup luksFormat --type luks2 --key-file "$_hk" "$P_HOME"
+      cryptsetup open --key-file "$_hk" "$P_HOME" home
+      shred -u "$_hk" 2>/dev/null || rm -f "$_hk"
+    else
+      cryptsetup luksFormat --type luks2 "$P_HOME"
+      cryptsetup open "$P_HOME" home
+    fi
     mkfs.ext4 -L home "$CRYPT_HOME"
   else
     info "home 分区不加密，直接 ext4..."
@@ -420,6 +520,28 @@ extract_stage3() {
     # 继续传输 + 失败重试（网络不稳时更可靠）
     retry "$CONFIG_GIT_RETRIES" "$CONFIG_GIT_RETRY_SLEEP" \
       curl -fL -C - --progress-bar -o "$bn" "$url" || die "stage3 下载失败: $url"
+
+    # 尝试校验 sha512（若可用）
+    info "尝试获取并校验 sha512..."
+    if retry "$CONFIG_GIT_RETRIES" "$CONFIG_GIT_RETRY_SLEEP" curl -fL -o "${bn}.sha512" "${url}.sha512"; then
+      # 支持两种 sha 文件格式：包含文件名或仅 checksum
+      if grep -q "$(printf '%s' "$bn")" "${bn}.sha512" 2>/dev/null; then
+        sha512sum -c "${bn}.sha512" || die "stage3 sha512 校验失败"
+      else
+        # 将单列 checksum 转换为可被 sha512sum -c 使用的格式（使用临时文件以避免复杂的嵌套引号）
+        tmp_sha="$(mktemp)"
+        sed -E "s/^[[:space:]]*([0-9a-fA-F]{128}).*/\\1  $bn/" "${bn}.sha512" > "$tmp_sha"
+        if ! sha512sum -c "$tmp_sha"; then
+          rm -f "$tmp_sha"
+          die "stage3 sha512 校验失败"
+        fi
+        rm -f "$tmp_sha"
+      fi
+    else
+      warn "未能获取 ${bn}.sha512，继续但建议手动校验。"
+      [[ "$UNATTENDED" == "1" ]] || true
+    fi
+
   else
     warn "无法自动探测 stage3 地址。"
     if confirm "用 links 手动浏览下载 stage3？" n; then
@@ -715,8 +837,16 @@ setup_grub() {
   require_root
   compute_devices
   emerge -1 sys-boot/grub:2
-  # --removable 在 merge-usr 版本存在 bug，见 README 注释
-  grub-install --target=x86_64-efi --efi-directory=/boot --removable
+  # prefer non-removable installation when efibootmgr and efivars are present
+  if has_cmd efibootmgr && [[ -d /sys/firmware/efi/efivars ]]; then
+    grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=Gentoo
+    if has_cmd efibootmgr; then
+      efibootmgr --create --disk "$CONFIG_DISK" --part 1 --label "Gentoo" --loader '\\EFI\\Gentoo\\grubx64.efi' || warn "efibootmgr 创建引导项失败（请手动检查）"
+    fi
+  else
+    warn "无法使用 efibootmgr 或未在 EFI 环境，回退到 --removable 模式"
+    grub-install --target=x86_64-efi --efi-directory=/boot --removable
+  fi
   if [[ "$CONFIG_ENCRYPT" == "yes" ]]; then
     echo 'GRUB_CMDLINE_LINUX="crypt_root='"${P_ROOT}"' root=/dev/mapper/root"' >> /etc/default/grub
   fi
@@ -747,12 +877,16 @@ main() {
 
   if [[ "$mode" == "interactive" ]]; then
     require_tools
+    trap cleanup ERR
+    if ! fetch_repo_assets; then warn "自动获取仓库附件失败，部分功能可能缺失（可手动放入仓库）"; fi
     interactive_config
     prep_disk; do_mount; extract_stage3; chroot_prep
 
   elif [[ "$mode" == "unattended" ]]; then
     UNATTENDED=1
     require_tools
+    trap cleanup ERR
+    fetch_repo_assets || die "无法获取必要的仓库附件，退出"
     prep_disk; do_mount; extract_stage3; chroot_prep
 
   elif [[ "$mode" == "--chroot" ]]; then
@@ -811,7 +945,74 @@ CONFIG_GITHUB_BASE=$CONFIG_GITHUB_BASE
 CONFIG_ESP_SIZE=$ESP_MIB
 CONFIG_ROOT_SIZE=$ROOT_MIB
 CONFIG_SWAP_SIZE=$SWAP_MIB
+CONFIG_BG_STEPS="$CONFIG_BG_STEPS"
+CONFIG_BG_RETRIES=$CONFIG_BG_RETRIES
+CONFIG_BG_SLEEP=$CONFIG_BG_SLEEP
 EOF
+
+  # 生成后台 runner 脚本并复制到目标 /root/（供 live 环境以 chroot 调用）
+  write_bg_runner() {
+    cat > "$SCRIPT_DIR/auto_install_runner.sh" <<'RUNNER'
+#!/usr/bin/env bash
+set -euo pipefail
+# 这个 runner 在 live(host) 环境运行：它会 chroot 到目标并执行 install.sh 子命令
+LOG="/var/log/gentoo_auto_install_runner.log"
+exec > >(tee -a "$LOG") 2>&1
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ARTDIR="$SCRIPT_DIR/artifacts"
+mkdir -p "$ARTDIR"
+
+TARGET="${CONFIG_TARGET:-/mnt/gentoo}"
+RETRIES=${CONFIG_BG_RETRIES:-5}
+SLEEP_SECS=${CONFIG_BG_SLEEP:-60}
+STEPS="${CONFIG_BG_STEPS:---chroot --desktop --zsh --grub}"
+
+read -r -a steps <<< "$STEPS"
+
+for step in "${steps[@]}"; do
+  ok=0
+  attempt=0
+  while [[ $attempt -lt $RETRIES ]]; do
+    attempt=$((attempt+1))
+    ts=$(date -u +%Y%m%dT%H%M%SZ)
+    echo "[runner] 执行 step=$step (尝试 $attempt/$RETRIES)"
+    # 在目标 chroot 中运行子任务并收集返回码
+    if chroot "$TARGET" /bin/bash -lc "/root/install.sh '$step'"; then
+      ok=1
+      # 成功后抓取 emerge/日志快照到 artifacts
+      echo "[runner] step=$step 成功，收集日志..."
+      chroot "$TARGET" /bin/bash -lc "mkdir -p /root/artifacts && tar czf /root/artifacts/${step}-${ts}.tgz /var/log /var/tmp/portage || true"
+      cp "$TARGET/root/artifacts/${step}-${ts}.tgz" "$ARTDIR/" 2>/dev/null || true
+      break
+    fi
+    echo "[runner] step=$step 失败，$SLEEP_SECS 秒后重试"
+    # 在失败时仍尝试收集日志以便诊断
+    chroot "$TARGET" /bin/bash -lc "mkdir -p /root/artifacts && tar czf /root/artifacts/${step}-failed-${ts}.tgz /var/log /var/tmp/portage || true"
+    cp "$TARGET/root/artifacts/${step}-failed-${ts}.tgz" "$ARTDIR/" 2>/dev/null || true
+    sleep "$SLEEP_SECS"
+  done
+  if [[ $ok -ne 1 ]]; then
+    echo "[runner] step=$step 多次失败，退出并保留日志（在 $ARTDIR）"
+    exit 2
+  fi
+done
+
+echo "[runner] 所有步骤完成。 日志与抓取文件位于: $ARTDIR"
+RUNNER
+    chmod +x "$SCRIPT_DIR/auto_install_runner.sh"
+    # 也把 runner 复制到目标 root 便于离线查看
+    cp "$SCRIPT_DIR/auto_install_runner.sh" "$CONFIG_TARGET/root/" 2>/dev/null || true
+  }
+
+  if [[ "$UNATTENDED" == "1" ]]; then
+    write_bg_runner
+    info "启动后台自动化 runner（nohup + setsid）"
+    # 在 host 上直接运行 runner（它会负责 chroot 到目标），避免在 chroot 内再 chroot
+    nohup setsid "$SCRIPT_DIR/auto_install_runner.sh" >/dev/null 2>&1 &
+    info "后台 runner 已启动（日志: /var/log/gentoo_auto_install_runner.log，抓取文件位于 $SCRIPT_DIR/artifacts/）"
+  fi
+
   cat <<EOF
 ==================================================
 阶段一完成。接下来：
