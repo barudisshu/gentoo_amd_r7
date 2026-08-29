@@ -27,6 +27,23 @@ Also make a reference of
 > - 示例：
 >   `CONFIG_GITHUB_BASE=https://ghproxy.com sudo bash install.sh --unattended`
 
+
+## Preflight check & 常见问题快速修复
+
+仓库提供 preflight_check.sh 用于在 live/mini 环境检查前置条件：
+
+Usage:
+  sudo bash preflight_check.sh /dev/nvme0n1 /mnt/gentoo 1
+
+常见警告与修复：
+- 缺少命令(parted/cryptsetup/mkfs/curl/git/grub-install/efibootmgr/sha512sum)：在 live 环境安装对应包或使用带这些工具的镜像（gentoo-live/DVD）。
+- distfiles.gentoo.org 或 github.com 不可达：设置 CONFIG_GITHUB_BASE 到可用镜像（例如 https://ghproxy.com），或提前把 stage3 与仓库文件放入安装介质。
+- /sys/firmware/efi/efivars 不存在：请在 UEFI 模式启动 live 镜像以便正确安装非-removable GRUB，或允许回退到 --removable 模式。
+- 磁盘空间过小：建议 >= 30GiB；在小盘上缩减桌面编译或使用 binaryhost。
+- unattended LUKS：提供 CONFIG_LUKS_KEYFILE 或 CONFIG_LUKS_PASSPHRASE；若用 keyfile，请确保它在启动前安全可用。
+
+脚本会把运行日志与抓取文件放在：SCRIPT_DIR/artifacts/ 与 /var/log/gentoo_auto_install_runner.log，遇到问题请先查看这些文件。
+
 ## Prepare
 
 ```shell
