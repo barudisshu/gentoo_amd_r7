@@ -67,6 +67,10 @@ CONFIG_DESKTOP="${CONFIG_DESKTOP:-gnome}"                    # 桌面：gnome / 
 CONFIG_NERD_FONT="${CONFIG_NERD_FONT:-meslo}"
 # 如果可用，优先使用 gentoo 包 app-fonts/nerd-fonts（不同 overlay 名称可能不同）
 
+# 可选体验包（README 推荐软件）。以空格分隔；可用环境变量覆盖：
+# 例如: CONFIG_EXTRAS_PACKAGES="www-client/firefox media-video/vlc app-office/libreoffice"
+CONFIG_EXTRAS="${CONFIG_EXTRAS:-no}"                       # yes/no：是否默认安装 extras（交互模式仍会提示）
+CONFIG_EXTRAS_PACKAGES="${CONFIG_EXTRAS_PACKAGES:-www-client/firefox media-video/vlc app-office/libreoffice gimp app-admin/synaptic}"
 
 # 网络重试参数（中国网络环境下 clone/下载不稳，默认 5 次 / 间隔 3s）
 CONFIG_GIT_RETRIES="${CONFIG_GIT_RETRIES:-5}"
@@ -776,6 +780,33 @@ setup_desktop() {
 }
 
 # ---------------------------------------------------------------------------
+# 阶段：extras（可选体验包，chroot 内，可单独运行 --extras）
+# 推荐软件集合由 CONFIG_EXTRAS_PACKAGES 指定，可交互确认或 unattended 自动化
+setup_extras() {
+  require_root
+  # 如果用户未显式要求，交互时询问
+  if [[ "${UNATTENDED:-0}" != "1" ]]; then
+    if [[ "${CONFIG_EXTRAS}" != "yes" ]]; then
+      if ! confirm "是否安装 README 中推荐的额外体验软件（${CONFIG_EXTRAS_PACKAGES%% *} ...）？" n; then
+        info "跳过 extras 安装"
+        return 0
+      fi
+    fi
+  else
+    # unattended 模式：若未配置为安装，直接跳过
+    if [[ "${CONFIG_EXTRAS}" != "yes" ]]; then
+      warn "unattended 模式且 CONFIG_EXTRAS != yes，跳过 extras 安装"
+      return 0
+    fi
+  fi
+
+  warn "开始安装 extras：${CONFIG_EXTRAS_PACKAGES}。这可能很耗时，视包与编译情况而定。"
+  local ncores; ncores=$(nproc 2>/dev/null || echo 2)
+  [[ $ncores -gt 8 ]] && ncores=8
+  emerge --jobs "$ncores" --load-average $((ncores*2)) ${CONFIG_EXTRAS_PACKAGES}
+  info "extras 安装完成（或部分失败，查看 emerge 输出）。"
+}
+
 # 阶段：zsh + Powerlevel10k + zsh-autosuggestions（chroot 内，可选运行）
 #   autosuggestions 主树/gentoo-zh 均无，用官方 git clone 方式装入 ~/.zsh/
 # ---------------------------------------------------------------------------
@@ -946,6 +977,11 @@ main() {
   elif [[ "$mode" == "--zsh" ]]; then
     [[ -f /root/install.env ]] && source /root/install.env
     setup_zsh
+    return 0
+
+  elif [[ "$mode" == "--extras" ]]; then
+    [[ -f /root/install.env ]] && source /root/install.env
+    setup_extras
     return 0
 
   elif [[ "$mode" == "--final" ]]; then
