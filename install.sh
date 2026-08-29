@@ -63,6 +63,10 @@ GEKK_CONF_SRC="${GEKK_CONF_SRC:-/root/genkernel.conf}"      # LUKS/DMCRYPT/固�
 KERNEL_CONF_SRC="${KERNEL_CONF_SRC:-/root/6.18.48}"         # 内核配置（含固件）
 PKG_USE_DIR="${PKG_USE_DIR:-/root/package.use}"             # 仓库 package.use/ 目录（拷入 /etc/portage/）
 CONFIG_DESKTOP="${CONFIG_DESKTOP:-gnome}"                    # 桌面：gnome / none（--desktop 阶段使用）
+# 字体（Powerlevel10k 推荐 Nerd Font，如 MesloLGS）
+CONFIG_NERD_FONT="${CONFIG_NERD_FONT:-meslo}"
+# 如果可用，优先使用 gentoo 包 app-fonts/nerd-fonts（不同 overlay 名称可能不同）
+
 
 # 网络重试参数（中国网络环境下 clone/下载不稳，默认 5 次 / 间隔 3s）
 CONFIG_GIT_RETRIES="${CONFIG_GIT_RETRIES:-5}"
@@ -191,7 +195,7 @@ require_tools() {
     fi
   done
   # Suggested tools
-  for t in links nano blkid; do
+  for t in links nano blkid unzip fc-cache; do
     has_cmd "$t" || warn "建议安装: $t"
   done
   [[ $missing -eq 0 ]] || die "缺少关键工具，无法继续。"
@@ -775,6 +779,37 @@ setup_desktop() {
 # 阶段：zsh + Powerlevel10k + zsh-autosuggestions（chroot 内，可选运行）
 #   autosuggestions 主树/gentoo-zh 均无，用官方 git clone 方式装入 ~/.zsh/
 # ---------------------------------------------------------------------------
+# 安装 Nerd Font 的辅助函数（尝试 emerge，失败则从 GitHub release 拉取 Meslo）
+install_nerd_font() {
+  require_root
+  local fontdir="/usr/local/share/fonts/nerd-fonts"
+  mkdir -p "$fontdir"
+  # 先尝试 gentoo 包
+  if has_cmd emerge; then
+    if emerge --search -s "nerd-fonts" >/dev/null 2>&1; then
+      info "尝试通过 emerge 安装 nerd-fonts"
+      emerge -1 app-fonts/nerd-fonts || warn "emerge app-fonts/nerd-fonts 失败，回退到手动下载"
+      fc-cache -f -v || true
+      return 0
+    fi
+  fi
+
+  # 回退：从官方 release 下载 Meslo.zip（使用 latest release 下载链接）
+  local mesh_url="https://github.com/ryanoasis/nerd-fonts/releases/latest/download/Meslo.zip"
+  local tmpd tmpf
+  tmpd=$(mktemp -d)
+  tmpf="$tmpd/meslo.zip"
+  if retry "$CONFIG_GIT_RETRIES" "$CONFIG_GIT_RETRY_SLEEP" curl -fL -o "$tmpf" "$mesh_url"; then
+    info "解压 Meslo 到 $fontdir"
+    unzip -qq -o "$tmpf" -d "$tmpd" || true
+    find "$tmpd" -type f -iname "*Meslo*.ttf" -exec cp -a {} "$fontdir/" \; || true
+    fc-cache -f -v || true
+  else
+    warn "下载 Meslo Nerd Font 失败，请手动安装 MesloLGS NF 或其他 Nerd Font"
+  fi
+  rm -rf "$tmpd"
+}
+
 setup_zsh() {
   require_root
   emerge app-shells/zsh app-shells/zsh-completions app-shells/powerlevel10k dev-vcs/git
@@ -825,6 +860,9 @@ ZSHRC
     local home; home="$(getent passwd "$CONFIG_USER" | cut -d: -f6)"
     setup_user_zsh "$home" "$CONFIG_USER"
   fi
+
+  # 安装/提示 Nerd Font
+  install_nerd_font || warn "自动安装 Nerd Font 失败，请手动安装 MesloLGS NF 或其他 Nerd Font"
 
   info "zsh + Powerlevel10k + zsh-autosuggestions 已就绪。首次登录运行 'p10k configure' 完成主题向导；"
   info "主题图标需 Nerd Font（如 MesloLGS NF），请到终端设置里切换字体。"
