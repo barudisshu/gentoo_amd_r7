@@ -105,6 +105,18 @@ confirm() { # $1=提示 $2=默认(y/n)；返回 0 表示是
   esac
 }
 
+# 危险操作二次确认：必须输入目标磁盘路径（如 /dev/nvme0n1）才继续，直接回车=取消
+confirm_danger() {
+  local dev="$1" inp det
+  det=$(lsblk -ndo SIZE,MODEL "$dev" 2>/dev/null)
+  warn "=============================================="
+  warn "即将销毁 $dev 上的【全部数据】！$([[ -n "$det" ]] && echo "($det)")"
+  warn "=============================================="
+  printf "为确认，请输入磁盘路径 %s（直接回车取消）: " "$dev"
+  IFS= read -r inp
+  [[ "$inp" == "$dev" ]]
+}
+
 partition_dev() { # DISK -> 分区设备（nvme 为 pN，其余按 udev 规则）
   case "$1" in
     *nvme*|*mmcblk*|*nbd*|*loop*) echo "${1}p$2" ;;
@@ -304,7 +316,7 @@ prep_disk() {
   compute_devices
   confirm_layout
   info "磁盘: $CONFIG_DISK（加密=${CONFIG_ENCRYPT}），将销毁其全部数据!"
-  confirm "确认继续？" y || die "已取消"
+  confirm_danger "$CONFIG_DISK" || { warn "已取消分区（未做任何修改）。"; return 1; }
   umount -R "${CONFIG_TARGET}" 2>/dev/null || true
 
   # GPT 分区表（用自动计算的布局，消除原 513-1537 空洞）
@@ -439,6 +451,39 @@ chroot_prep() {
 # ---------------------------------------------------------------------------
 is_systemd() { [[ "${CONFIG_INITSYS:-systemd}" == "systemd" ]]; }
 
+# 自动选择匹配 init 系统的 desktop profile（替代新手手动 eselect）
+#   systemd -> .../desktop/gnome/systemd（优先）或 .../desktop/systemd
+#   openrc  -> .../desktop/gnome（不含 systemd 的 17.1 变体）
+select_profile() {
+  local pat target num
+  if is_systemd; then
+    pat='desktop/gnome/systemd'
+  else
+    pat='desktop/gnome'
+  fi
+  target=$(eselect profile list 2>/dev/null | grep "$pat" | head -1)
+  if is_systemd && [[ -z "$target" ]]; then
+    target=$(eselect profile list 2>/dev/null | grep 'desktop/systemd' | head -1)
+  fi
+  if ! is_systemd; then
+    # openrc：去掉误带 systemd 的行
+    target=$(eselect profile list 2>/dev/null | grep "$pat" | grep -v systemd | head -1)
+  fi
+  if [[ -z "$target" ]]; then
+    warn "未自动匹配到 desktop profile，请手动: eselect profile list && eselect profile set <编号>"
+    return 1
+  fi
+  num=$(printf '%s\n' "$target" | sed -E 's/.*\[([0-9]+)\].*/\1/')
+  info "自动选择 profile: $(printf '%s\n' "$target" | sed -E 's/^\s*//')"
+  if [[ -n "$num" ]]; then
+    eselect profile set "$num" || { warn "eselect profile set 失败，请手动设置"; return 1; }
+  else
+    warn "未解析出 profile 编号，请手动: eselect profile set <编号>"
+    return 1
+  fi
+}
+
+
 # 启用服务：systemd 用 systemctl，openrc 用 rc-update
 svc_enable() {
   local svc
@@ -499,15 +544,13 @@ chroot_setup() {
 
   emerge --sync || true
 
-  # profile：提示用户选择与 init 系统匹配的 desktop profile
-  info "可用 profile："
-  eselect profile list
-  if is_systemd; then
-    warn "请手动: eselect profile set <编号> (选 default/linux/amd64/.../desktop/gnome/systemd) 后继续"
-  else
-    warn "请手动: eselect profile set <编号> (选 default/linux/amd64/.../desktop/gnome (无 systemd/17.1)) 后继续"
+  # profile：自动选择匹配 init 系统的 desktop profile
+  if ! select_profile; then
+    # 自动匹配失败：列出供手动选择
+    info "可用 profile："
+    eselect profile list
+    confirm "是否打开 eselect 手动选择 profile？" n && eselect profile set
   fi
-  # openrc 需要手动把系统切到非 systemd 的 profile；此处仅提示
 
   # 时区 / locale
   echo "$CONFIG_TIMEZONE" > /etc/timezone
@@ -586,7 +629,14 @@ setup_desktop() {
     nano /etc/portage/package.use/gnome
   }
 
-  emerge --ask gnome vim
+  # 编译 GNOME 会耗时很久（可能 1-2 小时+），先给新手明确提示
+  warn "即将编译并安装 GNOME，可能耗时 1~2 小时以上，过程中请勿中断。"
+  warn "（并行任务数受 make.conf 的 MAKEOPTS=-j8 -l8 控制）"
+
+  # 去掉 --ask（避免卡在交互确认），改用 --jobs/--load-average 并行编译多个包
+  local ncores; ncores=$(nproc 2>/dev/null || echo 4)
+  [[ $ncores -gt 8 ]] && ncores=8
+  emerge --jobs "$ncores" --load-average 8 gnome vim
   if [[ -n "$CONFIG_USER" ]]; then
     gpasswd -a "$CONFIG_USER" plugdev 2>/dev/null || true
   fi
