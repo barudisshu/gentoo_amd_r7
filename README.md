@@ -5,6 +5,14 @@ Also make a reference of
 - https://wiki.gentoo.org/wiki/Lenovo_Ideapad_Slim_7
 - https://wiki.gentoo.org/wiki/Lenovo_Thinkpad_T495
 
+> 自动化安装（UEFI + 可选 LUKS + ext4，按磁盘容量自动分区）见仓库中的 `install.sh`；
+> 下方的手动步骤与之对应，可二选一使用。
+>
+> `install.sh` 支持 init 系统选择：交互时会询问 **systemd / openrc**（默认 systemd），
+> 并据所选分支自动下载对应的 stage3、提示匹配的 profile、按 systemctl / rc-update 启用服务。
+> 下方手动步骤以 systemd 为例；OpenRC 用户把 stage3 换成 `stage3-amd64-openrc-*`、
+> 选不含 systemd 的 profile，并把 `systemctl enable X` 换成 `rc-update add X default` 即可。
+
 ## Prepare
 
 ```shell
@@ -137,10 +145,10 @@ cryptsetup luksFormat --type luks2 /dev/nvme0n1p3
 cryptsetup open /dev/nvme0n1p3 home
 mkfs.ext4 -L home /dev/mapper/home
 
-# 可选：/boot 另建分区并加密 —— 需配合 GRUB 的 cryptodisk 使用
-# cryptsetup luksFormat --type luks2 /dev/nvme0n1p2
-# cryptsetup open /dev/nvme0n1p2 boot
-# mkfs.ext4 -L boot /dev/mapper/boot
+# 说明：本方案 ESP(p1) 与 已加密的 root(p2)/home(p3) 均已分区，没有专门的
+# "/boot" 数据分区——/boot 就是 ESP(p1, vfat)，保持不解密即可由 GRUB 直接读取。
+# 若确需把 /boot 单独加密，则需另建分区并在 GRUB 中启用 cryptodisk，
+# 且 kernel 需 CONFIG_CRYPTO + command line 指向加密 boot。
 ```
 
 ```shell
@@ -152,10 +160,14 @@ lsblk
 ```
 
 ```shell
+# 下载最新 stable stage3（systemd，amd64）——脚本会自动执行这一步
 cd /mnt/gentoo
-links https://www.gentoo.org/downloads/mirrors/
+curl -fL -O https://distfiles.gentoo.org/releases/amd64/autobuilds/20260823T153057Z/stage3-amd64-systemd-20260823T153057Z.tar.xz
+# 或改用手动浏览选择：
+# links https://distfiles.gentoo.org/releases/amd64/autobuilds/
 
-tar xvf stage3-*.tar.xz --xattrs
+# 解压（记得带 --xattrs 与 --numeric-owner）
+tar xJpf stage3-*.tar.xz --xattrs-include='*.*' --numeric-owner
 ```
 
 ```shell
@@ -241,25 +253,34 @@ cat /var/lib/portage/world
 nano -w /etc/genkernel.conf
 ```
 
-在 `/etc/genkernel.conf` 中启用 LUKS 支持：
+在 `/etc/genkernel.conf` 中启用 LUKS 支持（仓库内的 `genkernel.conf` 已写好，可复制）：
 ```
 # genkernel.conf
 LUKS="yes"
 DMCRYPT="yes"
-# 若 /boot 也加密，则加上：
-# CRYPTBOOT="yes"
+# 若 /boot 也加密，则加上： CRYPTBOOT="yes"
+```
+```shell
+# 复制仓库中的 genkernel.conf（已含 LUKS / DMCRYPT / FIRMWARE_FILES）
+cp /path/to/genkernel.conf /etc/genkernel.conf
+```
+
+### 创建 /etc/crypttab（必须在执行 genkernel 之前创建，genkernel 会把它打进 initramfs）
+```shell
+cat > /etc/crypttab <<'EOF'
+root   /dev/nvme0n1p2  none  luks,discard
+home   /dev/nvme0n1p3  none  luks,discard
+EOF
+```
+
+### 加载随仓库提供的内核配置（含已同步的固件），再生成 fstab
+```shell
+cp /path/to/6.18.48 /usr/src/linux/.config
 ```
 
 ```shell
 emerge --ask genfstab
 genfstab -U / >> /etc/fstab
-```
-
-```shell
-# /etc/crypttab —— 开机时自动解锁加密分区
-# 示例：<target> <source_device> <key_file> <options>
-root   /dev/nvme0n1p2  none  luks,discard
-home   /dev/nvme0n1p3  none  luks,discard
 ```
 
 ```shell
@@ -270,7 +291,8 @@ home   /dev/nvme0n1p3  none  luks,discard
 ```
 
 ```shell
-genkernel --luks all
+# 使用仓库配置 + LUKS 支持构建内核与 initramfs
+genkernel --kernel-config=/usr/src/linux/.config --luks all
 ```
 
 ```shell
@@ -303,10 +325,27 @@ emerge sys-boot/grub:2
 ## there's a bug in `--removable` in new version grub2 while it's merge-usr distribution.
 grub-install --target=x86_64-efi --efi-directory=/boot --removable
 
-# 若 /boot (ESP) 未加密，仅 root/home 加密，则 GRUB 无需 cryptodisk；
-# 根分区解密由 initramfs 依据 /etc/crypttab 在启动时提示输入口令。
+# ESP 未加密，root/home 加密 → GRUB 无需 cryptodisk，但内核命令行必须指向
+# 加密根设备，否则 initramfs 无法解锁 root（会掉进紧急 shell）。
+echo 'GRUB_CMDLINE_LINUX="crypt_root=/dev/nvme0n1p2 root=/dev/mapper/root"' >> /etc/default/grub
 grub-mkconfig -o /boot/grub/grub.cfg
 ```
+
+### 桌面（GNOME）——安装前先确定 `/etc/portage/package.use/*`
+
+`emerge gnome` 依赖若干覆写 USE（如 `media-libs/opencv features2d`、`net-libs/ngtcp2 gnutls`、`net-dns/dnsmasq script` 等），必须先把这些 USE 落地到 `/etc/portage/package.use/`，否则会因依赖冲突而失败。
+
+仓库已提供一份经过整理的 `package.use`（firefox/gnome/libvirt/nautilus/pipewire/qemu/radeon），拷入 chroot：
+
+```shell
+# 在 chroot 内（或由阶段一自动拷入）
+mkdir -p /etc/portage/package.use
+cp /path/to/etc/portage/package.use/* /etc/portage/package.use/
+# 按需确认/修改（使用 `emerge -pv gnome` 复核 flags）
+nano /etc/portage/package.use/gnome
+```
+
+之后安装 GNOME 桌面：
 
 ```shell
 emerge gnome vim
@@ -336,6 +375,16 @@ cryptsetup close home
 cryptsetup close root
 reboot
 ```
+
+> 建议在 reboot 之前完成桌面编排（否则进系统后手动 `emerge gnome`）：
+> ```shell
+> # 在 chroot 内
+> bash /root/install.sh --desktop   # 先确认 package.use 再编译安装 GNOME
+> bash /root/install.sh --grub
+> # 回到 ISO 后
+> sudo bash /root/install.sh --final   # 卸载/关闭加密卷/重启
+> ```
+
 
 若启动时 initramfs 未自动解锁，可手动解锁根分区：
 ```shell
