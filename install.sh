@@ -17,6 +17,7 @@
 #   阶段二/三（chroot 内）:
 #     bash /root/install.sh --chroot      # 基础 + 内核
 #     bash /root/install.sh --desktop     # 桌面(GNOME)，安装前确认 package.use
+#     bash /root/install.sh --zsh         # (可选) zsh + Powerlevel10k 主题
 #     bash /root/install.sh --grub        # GRUB
 #   尾处理（ISO 环境）:
 #     sudo bash install.sh --final
@@ -536,7 +537,7 @@ EOF
     warn "请为 $CONFIG_USER 设置密码: passwd $CONFIG_USER"
   fi
 
-  info "阶段二（基础 + 内核）完成。接下来: bash /root/install.sh --desktop，之后 --grub"
+  info "阶段二（基础 + 内核）完成。接下来: bash /root/install.sh --desktop，之后 --zsh、--grub"
 }
 
 # ---------------------------------------------------------------------------
@@ -572,7 +573,56 @@ setup_desktop() {
     rc-update add dbus default 2>/dev/null || true
     rc-update add gdm default
   fi
-  info "桌面（GNOME）完成。接下来: bash /root/install.sh --grub"
+  info "桌面（GNOME）完成。接下来: bash /root/install.sh --zsh，之后 --grub"
+}
+
+# ---------------------------------------------------------------------------
+# 阶段：zsh + Powerlevel10k（chroot 内，可选运行）
+# ---------------------------------------------------------------------------
+setup_zsh() {
+  require_root
+  emerge app-shells/zsh app-shells/zsh-completions app-shells/powerlevel10k
+
+  local zshrc
+  zshrc='source "/usr/share/zsh-theme-powerlevel10k/powerlevel10k.zsh-theme"'
+
+  # 写入 ~/.zshrc（首次则创建）：completion + Powerlevel10k + p10k 配置
+  write_zshrc() {
+    local home="$1"
+    [[ -e "$home/.zshrc" ]] || : > "$home/.zshrc"
+    grep -q "$zshrc" "$home/.zshrc" 2>/dev/null && return 0
+    cat >> "$home/.zshrc" <<'ZSHRC'
+
+# History
+HISTFILE=~/.zsh_history
+HISTSIZE=10000
+SAVEHIST=10000
+setopt appendhistory incappendhistory histignorealldups sharehistory
+
+# Completion
+autoload -Uz compinit && compinit
+zstyle ':completion:*' use-cache 1
+
+# Powerlevel10k（可选 /usr/share/zsh/site-functions 亦可）
+source "/usr/share/zsh-theme-powerlevel10k/powerlevel10k.zsh-theme"
+[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+ZSHRC
+  }
+
+  # root 默认 shell
+  chsh -s /bin/zsh
+  write_zshrc /root
+
+  # 目标用户（若存在）
+  if [[ -n "$CONFIG_USER" ]] && id -u "$CONFIG_USER" >/dev/null 2>&1; then
+    chsh -s /bin/zsh "$CONFIG_USER"
+    local home; home="$(getent passwd "$CONFIG_USER" | cut -d: -f6)"
+    write_zshrc "$home"
+    chown "$CONFIG_USER":"$CONFIG_USER" "$home/.zshrc"
+  fi
+
+  info "zsh + Powerlevel10k 已就绪。首次登录运行 'p10k configure' 完成主题配置向导；"
+  info "主题图标需 Nerd Font（如 MesloLGS NF），请到终端设置里切换字体。"
 }
 
 # ---------------------------------------------------------------------------
@@ -636,6 +686,11 @@ main() {
   elif [[ "$mode" == "--desktop" ]]; then
     [[ -f /root/install.env ]] && source /root/install.env
     setup_desktop
+    return 0
+
+  elif [[ "$mode" == "--zsh" ]]; then
+    [[ -f /root/install.env ]] && source /root/install.env
+    setup_zsh
     return 0
 
   elif [[ "$mode" == "--final" ]]; then
